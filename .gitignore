@@ -1,0 +1,40 @@
+# Whitelist: ignore everything in the thesis folder, then let through only the code.
+# No data and no results go in (Cboe licence), no thesis, no notes or logs.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/requirements.txt
+!/Code/
+!/checks/
+!/experiments/
+!/old_versions/
+!/Data/
+
+# Data/: only the README that describes the layout
+/Data/*
+!/Data/README.md
+
+# checks/: no review tools, no data
+/checks/review_2026-10/
+/checks/data/
+
+# experiments/: only the quote-filter code, not its runs
+/experiments/*
+!/experiments/quote_filter/
+/experiments/quote_filter/logs/
+/experiments/quote_filter/confirm_main/
+
+# old_versions/: only the code behind the two earlier sets of runs
+/old_versions/*
+!/old_versions/backtest_2026-10-23_before_c8c9.py
+!/old_versions/run_variants_2026-10-23_before_c8c9.py
+!/old_versions/backtest_2026-10-25_before_c14.py
+!/old_versions/run_variants_2026-10-25_before_c14.py
+
+# everywhere: no outputs, no Python caches
+*.csv
+*.txt
+!/requirements.txt
+__pycache__/
+*.pyc
