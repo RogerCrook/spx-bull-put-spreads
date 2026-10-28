@@ -18,8 +18,14 @@ What this file is for:
     and the same printout as before (old version in
     old_versions/checks_before_style_2026-10-27/).
 
-Data: Data/05_atm_vol.csv (the quoted spot at every snapshot) and
-      Data/07_index_close/GSPC_daily.csv (the official close, from checks/fetch_gspc.py).
+    Since 2026-10-27 (review_log.md C15) stage 1 itself uses the official close
+    as S at the last snapshot, and keeps the recorded quote in its own column,
+    spot_quote. This file reads spot_quote, so it still compares the recorded
+    quote (before, it read spot, which was the recorded quote then).
+
+Data: Data/05_atm_vol.csv (the recorded index quote at every snapshot, column
+      spot_quote) and Data/07_index_close/GSPC_daily.csv (the official close,
+      from checks/fetch_gspc.py).
 Read-only: writes nothing. Takes about half a minute.
 Run it from the main folder:   python checks/check_s_close.py
 """
@@ -29,7 +35,10 @@ import pandas as pd                          # pandas works with tables
 
 # ---- 1. the quoted spot, one value per snapshot -----------------------------------
 
-atm = pd.read_csv("Data/05_atm_vol.csv", usecols=["quote_datetime", "spot"])
+atm = pd.read_csv("Data/05_atm_vol.csv", usecols=["quote_datetime", "spot_quote"])
+
+# from here on the recorded quote is called "spot", as in the rest of this file
+atm = atm.rename(columns={"spot_quote": "spot"})
 
 # every slice of one snapshot carries the same spot; groupby puts the slices of
 # each snapshot together and .median() keeps one value; reset_index turns the

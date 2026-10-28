@@ -14,4 +14,11 @@ All data of the thesis, numbered in the order the data sets were made (reorganis
 | `07_index_close/` | `IndexClose/` | official daily S&P 500 close (`GSPC_daily.csv`) | `checks/fetch_gspc.py` |
 | `08_vix/` | | Cboe's daily VIX history (`VIX_History.csv`), cited once in `tab:validation`, used by no script | download from https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv, 27 October 2026 |
 
+Since 2026-10-27 (review_log C15) `02_clean/`, `04_greeks/` and `05_atm_vol.csv`
+have a column `spot_quote` (the recorded index quote) next to `spot` (the index level
+S used): they differ only at the snapshot after the stock close, where `spot` is the
+official close. Puts are kept down to K/S = 0.30. `05_atm_vol_parts/` holds the
+monthly pieces of `05_atm_vol.csv` (so `Code/s08_atm_vol.py` can resume). The data
+before the rerun were kept outside the project folder until checked.
+
 Backtest results are in `../results/`.

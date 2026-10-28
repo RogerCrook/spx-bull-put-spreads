@@ -52,6 +52,19 @@ computes every number but marks the "in the thesis" column with "?".
 | `check_validation_day.py` | call vs put vol, smile shape, where the Greeks peak, on the two `fig:smile` slices | `tab:validation` | 21 |
 | `fetch_gspc.py` | downloaded `Data/07_index_close/GSPC_daily.csv` (Yahoo ^GSPC) on 2026-10-22 | data source of `sec:data` | 12 |
 
+## Checks for a decision (no thesis number depends on them yet)
+
+| Script | What it computes | For |
+|---|---|---|
+| `check_put_window.py` | rows a lower put bound of 0.40 / 0.35 / 0.30 (instead of 0.45) would add to stage 1, first trading day of each month and six stress days | review_log C15 (rerun of stage 1) |
+| `check_missing_legs.py` | for every held snapshot with a missing leg (`results/missing_<run>.csv`, written by the backtest since 2026-10-27): the step at which the leg was lost (not recorded, bid, crossed, strike window, no forward, no implied vol) | review_log C15, T26 |
+
+The C15 rerun (2026-10-27) was verified with two review tools in `review_2026-10/`:
+`test_c15_stage1_days.py` (the new stage 1 on four days against the old cleaned
+data) and `compare_c15.py` (old against new data, row by row, for stage 1, stage 2,
+the ATM file and the 30-day vol file). The outputs of the data checks before the
+rerun are in `review_2026-10/c15_outputs/before/`.
+
 Not in this folder but also behind thesis numbers: the pipeline scripts in `Code/`
 (e.g. `s09_vol_series.py` for the 19.7% stress share, `s10_entry_delta.py` for
 `results/entry_delta.csv`, `s13_figure_smile.py` for `fig:smile`, `s11_backtest.py`

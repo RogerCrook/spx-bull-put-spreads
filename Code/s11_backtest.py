@@ -27,16 +27,18 @@ WHAT IS IN THIS VERSION (build steps 1 to 3)
       equity.csv, and the daily return is the day's change in total P&L divided
       by the margin held at the start of the day ("return on margin").
 
-    - the end of the day (decided 2026-10-23, review_log.md C8 and C9). Both are
-      problems of the DATA, so the stored files are left as they are and the
-      backtest handles them while it runs. Each has an on/off switch below;
-      with both switched off the backtest gives exactly the old results.
+    - the end of the day (decided 2026-10-23, review_log.md C8 and C9).
         C9: the snapshot at the stock close (16:00, or 13:00 on early-close days)
             has unreliable option quotes. No decision is taken there: no exit
-            test, no new position. The next snapshot takes over.
+            test, no new position. The next snapshot takes over. Switch
+            SKIP_CLOSE_SNAPSHOT below.
         C8: the snapshot after the close (16:15, or 13:15) has a meaningless
-            index level S, and every delta there was computed with it. Those
-            deltas are corrected with the official daily close of the index.
+            index quote. Since 2026-10-27 (review_log.md C15) this is fixed in
+            the DATA: stage 1 (Code/s01_stage1_extract_simple.py) takes S there
+            to be the official daily close, so the stored deltas are right and
+            the backtest uses them as they are. (Until then the backtest
+            corrected those deltas itself, switch USE_OFFICIAL_CLOSE; that code
+            is in old_versions/s11_backtest_2026-10-27_before_c15.py.)
 
     - broken option quotes (decided 2026-10-25, review_log.md C14; developed
       in experiments/quote_filter). Also a problem of the DATA: some quotes are
@@ -113,12 +115,8 @@ EXECUTION = "mid"
 # early-close days), because the option quotes there are unreliable.
 SKIP_CLOSE_SNAPSHOT = True
 
-# C8: at the snapshot after the close (16:15, or 13:15), use the official daily
-# close of the index instead of the stored S when working out the deltas.
-USE_OFFICIAL_CLOSE = True
-
-# the official daily close of the S&P 500 (Yahoo, symbol ^GSPC), one row per day
-INDEX_CLOSE_FILE = "Data/07_index_close/GSPC_daily.csv"
+# C8 (the index level after the close) is handled in the data since 2026-10-27,
+# see the description at the top. Nothing to switch here any more.
 
 # ---- broken option quotes (review_log.md C14, decided 2026-10-25) ----------
 # "on":    (base case from 2026-10-25) a leg whose quote is broken is treated
@@ -148,15 +146,20 @@ RUN_NAME = EXECUTION + "_" + RECOVERY_MODE
 
 # runs with the end-of-day fix get "_c8c9" in their names, so they never
 # overwrite the results made without it
-if SKIP_CLOSE_SNAPSHOT or USE_OFFICIAL_CLOSE:
+if SKIP_CLOSE_SNAPSHOT:
     RUN_NAME = RUN_NAME + "_c8c9"
 # runs with the broken-quote rule get a "q" on top ("_c8c9q"), for the same reason
 if QUOTE_RULE == "on":
     RUN_NAME = RUN_NAME + "q"
+# every run on the data made since 2026-10-27 (S = official close after the
+# close, puts down to K/S = 0.30; review_log.md C15) gets "_c15" at the end,
+# so it never overwrites a result made on the earlier data
+RUN_NAME = RUN_NAME + "_c15"
 TRADES_FILE = "trades_" + RUN_NAME + ".csv"        # one row per finished trade
 EQUITY_FILE = "equity_" + RUN_NAME + ".csv"        # one row per trading day
 QUARTERS_FILE = "quarters_" + RUN_NAME + ".csv"    # one row per quarter
 QUOTES_FILE = "quotes_" + RUN_NAME + ".csv"        # the quote test, one row per leg and snapshot
+MISSING_FILE = "missing_" + RUN_NAME + ".csv"      # one row per held snapshot with a leg missing
 
 # ---- test settings ----------------------------------------------------
 
@@ -796,10 +799,8 @@ def read_month(month):
 
     # read only the columns we need (usecols), which saves a lot of memory.
     # quote_datetime and expiration stay as text, which is faster than dates.
-    # "spot" is the index level S that stage 2 used for the deltas; it is
-    # needed to correct the deltas after the close (USE_OFFICIAL_CLOSE)
     columns = ["quote_datetime", "root", "expiration", "dte", "strike",
-               "option_type", "bid", "ask", "mid", "iv", "delta", "spot"]
+               "option_type", "bid", "ask", "mid", "iv", "delta"]
     greeks = pd.read_csv(path, usecols=columns)
 
     # keep only puts, the strategy never trades calls
@@ -809,28 +810,8 @@ def read_month(month):
 
 
 # ======================================================================
-#  The end of the day (review_log.md C8 and C9)
+#  The end of the day (review_log.md C9)
 # ======================================================================
-
-def load_official_closes():
-    """
-    Read the official daily close of the S&P 500 (INDEX_CLOSE_FILE).
-
-    Returns a dictionary: date as text, e.g. "2020-03-16" -> close, e.g. 2386.13.
-    """
-
-    table = pd.read_csv(INDEX_CLOSE_FILE)
-
-    closes = {}                                # empty dictionary, filled below
-
-    # iterrows() goes through the table one row at a time; _ is the row label,
-    # which we do not need, and row is the row itself
-    for _, row in table.iterrows():
-        date = str(row["Date"])[:10]           # the first 10 characters: "2020-03-16"
-        closes[date] = float(row["Close"])
-
-    return closes
-
 
 def end_of_day_times(greeks):
     """
@@ -862,30 +843,6 @@ def end_of_day_times(greeks):
     return times
 
 
-def use_official_close(puts_now, close):
-    """
-    Correct the deltas of one snapshot after the stock close (C8).
-
-    Stage 2 worked out delta = delta_vs_forward * F / S, with S the middle of
-    the index bid and ask. After the close that S is meaningless, but the true
-    index level is the official close. Multiplying by S / close swaps the wrong
-    S for the close and changes nothing else:
-
-        delta * S / close = delta_vs_forward * F / close
-
-    Prices (bid, ask, mid) and implied volatilities do not use S and stay as
-    they are.
-    """
-
-    # a separate copy, so the month's table itself is not changed
-    puts_now = puts_now.copy()
-
-    # one column times another works row by row
-    puts_now["delta"] = puts_now["delta"] * puts_now["spot"] / close
-
-    return puts_now
-
-
 def main():
 
     print("loading", ATM_FILE, "...")
@@ -906,14 +863,11 @@ def main():
     # the T-bill rates (same function stage 2 used)
     rates = load_rates()
 
-    # the official daily close of the index (only needed for USE_OFFICIAL_CLOSE)
-    official_close = {}
-    if USE_OFFICIAL_CLOSE:
-        official_close = load_official_closes()
-
-    # counters for the end-of-day handling, printed in the summary
+    # counter for the end-of-day handling, printed in the summary
     close_snapshots_skipped = 0                # C9: snapshots at the close not used
-    after_close_corrected = 0                  # C8: snapshots after the close corrected
+
+    # one row per held snapshot where a leg was missing, saved to MISSING_FILE
+    missing_rows = []
 
     # the broken-quote test (QUOTE_RULE, C14)
     if QUOTE_RULE == "on" and (BROKEN_VOL_JUMP is None or BROKEN_WIDTH_RATIO is None):
@@ -987,11 +941,13 @@ def main():
 
             current_date = today
 
-            # ---- 0b. the end of the day (review_log.md C9 and C8) --------
+            # ---- 0b. the end of the day (review_log.md C9) ---------------
 
             time_now = when[11:]               # the time part, e.g. "16:00:00"
 
-            # the two special times of today, e.g. ("16:00:00", "16:15:00")
+            # the two special times of today, e.g. ("16:00:00", "16:15:00").
+            # Only the first is used here (the second was needed for the C8
+            # correction, which is now done in the data)
             close_time, after_close_time = day_times[today]
 
             # C9: at the stock close no decision is taken. "continue" jumps
@@ -999,15 +955,6 @@ def main():
             if SKIP_CLOSE_SNAPSHOT and time_now == close_time:
                 close_snapshots_skipped = close_snapshots_skipped + 1
                 continue
-
-            # C8: after the close, correct this snapshot's deltas with the
-            # official close before anything uses them
-            if USE_OFFICIAL_CLOSE and time_now == after_close_time:
-                if today in official_close:
-                    puts_now = use_official_close(puts_now, official_close[today])
-                    after_close_corrected = after_close_corrected + 1
-                else:
-                    print("  no official close for", today, "- deltas left as they are")
 
             # ---- 1. if we hold a position, test the exits ----------------
 
@@ -1019,6 +966,15 @@ def main():
                 if short_leg is None or long_leg is None:
                     # a leg is not quoted here: skip the tests, try next snapshot
                     position["skipped"] = position["skipped"] + 1
+                    # write down when and which leg, so that the cause can be
+                    # looked up later (checks/check_missing_legs.py)
+                    missing_rows.append({"when": when,
+                                         "root": position["root"],
+                                         "expiration": position["expiration"],
+                                         "strike_short": position["strike_short"],
+                                         "strike_long": position["strike_long"],
+                                         "short_missing": short_leg is None,
+                                         "long_missing": long_leg is None})
                 else:
                     # ---- 1a. the broken-quote test (QUOTE_RULE, C14) ------
                     reason = None
@@ -1246,8 +1202,12 @@ def main():
     print()
     print("saved", len(table), "trades to", TRADES_FILE)
     print("snapshots without a position:", flat_snapshots)
-    print("close snapshots skipped (C9):", close_snapshots_skipped,
-          "| after-close snapshots corrected (C8):", after_close_corrected)
+    print("close snapshots skipped (C9):", close_snapshots_skipped)
+
+    # the held snapshots with a missing leg (one dictionary per snapshot)
+    missing_table = pd.DataFrame(missing_rows)
+    missing_table.to_csv(MISSING_FILE, index=False)
+    print("held snapshots with a leg missing:", len(missing_rows), "| saved to", MISSING_FILE)
 
     if QUOTE_RULE != "off":
         # quote_rows is a list of dictionaries (one per leg and snapshot);

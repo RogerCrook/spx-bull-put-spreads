@@ -24,6 +24,16 @@ data paths (`Data/...`) are relative to it, and outputs are written there.
 | `s12_run_variants.py` | `run_variants.py` | runs the backtest variants |
 | `s13_figure_smile.py` | `figure_smile.py` | Figure `fig:smile` |
 
+**Changed 2026-10-27 (review_log C15):** stage 1 takes the index level S at the
+snapshot after the stock close (16:15, or 13:15 on early-close days) to be the
+official daily close (`Data/07_index_close/GSPC_daily.csv`) and keeps the recorded
+quote in a column `spot_quote`, and it keeps puts down to K/S = 0.30 (was 0.45).
+The backtest no longer corrects the deltas after the close itself (the switch
+`USE_OFFICIAL_CLOSE` is gone), and its output files end in `_c15`. `s01`, `s07`,
+`s08` can be stopped and restarted (finished months are skipped, files are written
+under a temporary name first) and can be imported without running. The versions
+before are in `../old_versions/*_2026-10-27_before_c15.py`.
+
 Read-only check scripts are in `../checks/`, the quote-rule experiment in
 `../experiments/quote_filter/` (with its own copies of the modules, old names), older
 versions in `../old_versions/` (the state just before the renaming in

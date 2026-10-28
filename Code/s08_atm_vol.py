@@ -19,6 +19,16 @@ What this file is for:
 
 HOW TO RUN IT
     python Code/s08_atm_vol.py
+
+CHANGED 2026-10-27 (review_log.md C3 and C15; the version before is in
+old_versions/s08_atm_vol_2026-10-27_before_c15.py):
+  - each month's result is first saved on its own in PARTS_FOLDER. A month
+    already saved there is not done again, and a month that fails is reported
+    and the run carries on. So the run can be stopped and started again, and a
+    crash after hours costs only the month it happened in. At the end the
+    months are put together into OUT_FILE exactly as before.
+  - the recorded index quote spot_quote is saved next to spot.
+  - main() only runs when this file is started directly (review_log.md C4).
 """
 
 import os
@@ -30,6 +40,7 @@ import pandas as pd
 
 GREEKS_FOLDER = "Data/04_greeks"           # where stage 2 put its files
 OUT_FILE = "Data/05_atm_vol.csv"           # the one file this produces
+PARTS_FOLDER = "Data/05_atm_vol_parts"     # one file per month, put together at the end
 
 WIDTH = 0.05                               # use strikes within 5% of the forward
 
@@ -116,6 +127,7 @@ def process_one_file(path):
             "expiration": expiry,
             "dte": slice_table["dte"].iloc[0],
             "spot": slice_table["spot"].iloc[0],
+            "spot_quote": slice_table["spot_quote"].iloc[0],    # the recorded index quote (C15)
             "forward": F,
             "atm_iv": sigma,
         })
@@ -134,16 +146,34 @@ def main():
         print("Nothing found. Check GREEKS_FOLDER is spelled correctly.")
         return
 
-    pieces = []                            # one table per month goes in
+    # make the folder for the monthly parts; exist_ok=True: no error if it exists
+    os.makedirs(PARTS_FOLDER, exist_ok=True)
+
+    failed_months = []                     # the months that went wrong, if any
 
     # enumerate gives a counter (starting at 1) alongside each file
     for number, path in enumerate(files, 1):
 
         name = os.path.basename(path)      # the file name without the folder
+        part_path = PARTS_FOLDER + "/" + name
 
-        result = process_one_file(path)
+        if os.path.exists(part_path):      # done on an earlier run
+            print(number, "/", len(files), name, "already done, skipping")
+            continue
 
-        pieces.append(result)
+        # try / except: if anything goes wrong with one month, report it and
+        # carry on with the next one instead of losing the whole run
+        try:
+            result = process_one_file(path)
+        except Exception as problem:
+            print(number, "/", len(files), name, "FAILED:", problem)
+            failed_months.append(name)
+            continue
+
+        # save the month: first under a temporary name, then rename it, so a
+        # half-written file can never look finished
+        result.to_csv(part_path + ".part", index=False)
+        os.replace(part_path + ".part", part_path)
 
         # isna() is True where no volatility could be fitted; .sum() counts them
         missing = int(result["atm_iv"].isna().sum())
@@ -151,6 +181,19 @@ def main():
         print(number, "/", len(files), name,
               "|", len(result), "slices",
               "| could not fit", missing)
+
+    if len(failed_months) > 0:
+        print()
+        print("These months FAILED, so", OUT_FILE, "is not written:", failed_months)
+        print("Fix the problem and start the file again; finished months are skipped.")
+        return
+
+    # read the monthly parts back, one per month, in the order of the months
+    pieces = []                            # one table per month goes in
+    for path in files:
+        part_path = PARTS_FOLDER + "/" + os.path.basename(path)
+        # the time and expiry are read as dates, as process_one_file made them
+        pieces.append(pd.read_csv(part_path, parse_dates=["quote_datetime", "expiration"]))
 
     # pd.concat stacks the monthly tables on top of each other into one table
     everything = pd.concat(pieces)
@@ -170,4 +213,7 @@ def main():
           "(", round(size_mb, 1), "MB )")
 
 
-main()
+# Run main() only when this file is started directly (python Code/s08_atm_vol.py),
+# not when another file imports it (review_log.md C4, changed 2026-10-27)
+if __name__ == "__main__":
+    main()
