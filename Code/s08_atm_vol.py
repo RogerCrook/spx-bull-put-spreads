@@ -20,13 +20,17 @@ What this file is for:
 HOW TO RUN IT
     python Code/s08_atm_vol.py
 
-CHANGED 2026-10-27 (review_log.md C3 and C15; the version before is in
-old_versions/s08_atm_vol_2026-10-27_before_c15.py):
+CHANGED 2026-10-27 (review_log.md C3 and C15; the version before is the one
+in commit 4aca3ae, tag thesis-v1):
   - each month's result is first saved on its own in PARTS_FOLDER. A month
     already saved there is not done again, and a month that fails is reported
     and the run carries on. So the run can be stopped and started again, and a
     crash after hours costs only the month it happened in. At the end the
     months are put together into OUT_FILE exactly as before.
+    WARNING: a month already in PARTS_FOLDER is never recomputed. Before a
+    rerun on changed Greeks files, delete PARTS_FOLDER, or the old months are
+    used again without any message. (The folder of the C15 run was deleted
+    on 2026-10-29, after OUT_FILE was written.)
   - the recorded index quote spot_quote is saved next to spot.
   - main() only runs when this file is started directly (review_log.md C4).
 """

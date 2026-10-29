@@ -4,11 +4,12 @@ CHECK: how many quotes get no implied volatility, over the whole sample
 
 What this file is for:
     sec:iv-impl says that quotes outside the no-arbitrage bounds get no
-    volatility, that these are "0.6 to 0.8% of quotes, all of them
-    in-the-money puts whose mid lies below intrinsic value, and none among the
-    out-of-the-money puts the strategy trades". Those figures come from the
-    methodology report, and a check on 10 sample days (2026-10-22) found 1.05%.
-    This file counts them on every row of the stage-2 output.
+    volatility, and that these are 0.90% of the 448 million stored quotes
+    (0.3 to 2.9% by year), 99.6% of them in-the-money puts and the rest
+    in-the-money calls, with a single one among the 273 million
+    out-of-the-money puts the strategy trades. (Until 2026-10-27 the thesis
+    gave the methodology report's 0.6 to 0.8%.) This file counts them on every
+    row of the stage-2 output.
 
     Stage 2 stores every cleaned quote with its implied volatility in the
     column "iv"; where the bisection found no answer, iv is empty (NaN).
@@ -17,8 +18,8 @@ What this file is for:
       a put is in the money when its strike is above F (K > F),
       a call is in the money when its strike is below F (K < F).
 
-Data: all 176 files of Data/04_greeks/ (about 59 GB), read in pieces, four columns only.
-Read-only: writes nothing. Takes roughly 20 to 40 minutes.
+Data: all 176 files of Data/04_greeks/ (about 68 GB), read in pieces, four columns only.
+Read-only: writes nothing. Takes about 10 minutes (9 minutes on 2026-10-27).
 Run it from the main folder:   python checks/check_iv_failures.py
 """
 

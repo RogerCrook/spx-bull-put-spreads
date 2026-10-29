@@ -8,7 +8,8 @@ What this file is for:
     percentile of the 252 previous daily values (def:stress). It stores them in
     Data/06_vol30.csv. This file builds both again with its own code, compares
     them with the stored ones, and also recomputes the stress flag recorded on
-    every trade of the first base-case run.
+    every trade of the reported base-case run at mid (results/trades_base_mid.csv;
+    until 2026-10-28 the first base-case run, made before the stock-close rule).
 
     The 30-day volatility of a day: the ATM volatilities of the expiries around
     30 days are turned into total variance sigma^2 * tau, interpolated in a
@@ -20,9 +21,10 @@ What this file is for:
 
     Rewritten 2026-10-27 in the style of Code/s03_rates.py; same calculations
     and the same printout as before, plus the three example days at the end
-    (old version in old_versions/checks_before_style_2026-10-27/).
+    (old version in a folder old_versions/,
+    removed on 2026-10-29).
 
-Data: Data/05_atm_vol.csv, Data/06_vol30.csv, results/trades_mid_latest.csv.
+Data: Data/05_atm_vol.csv, Data/06_vol30.csv, results/trades_base_mid.csv.
 Read-only: writes nothing. Takes about a minute.
 Run it from the main folder:   python checks/check_vol30.py
 """
@@ -81,8 +83,13 @@ mine["stress"] = mine["vol30"] > mine["threshold"]
 # compare with the stored file: join puts the two tables side by side by date;
 # rsuffix="_stored" renames the stored columns (vol30 -> vol30_stored, ...)
 stored = pd.read_csv("Data/06_vol30.csv").set_index("date")
+# how="outer" keeps every date that is in either table (a date missing in
+# one of them gets empty values there)
 both = mine.join(stored, rsuffix="_stored", how="outer")
 
+# .dropna(subset=[...]) drops the dates where either value is empty, and
+# .shape[0] is the number of rows that are left; .fillna(False) counts an
+# empty stress flag as "no stress", so that two empty flags compare as equal
 print("days: mine %d | stored %d | in both %d" % (
     len(mine), len(stored), int(both.dropna(subset=["vol30", "vol30_stored"]).shape[0])))
 print("max |vol30 difference| %.2e | max |threshold difference| %.2e | stress flags differing: %d"
@@ -103,9 +110,9 @@ print("   their last snapshot:", last_time.reindex(missing).value_counts().to_di
 print("   examples:", missing[:8])
 
 
-# ---- (2) the stress flag recorded on the trades (first base-case run at mid) -------
+# ---- (2) the stress flag recorded on the trades (reported base-case run at mid) ----
 
-trades = pd.read_csv("results/trades_mid_latest.csv")
+trades = pd.read_csv("results/trades_base_mid.csv")
 
 # the slices of each snapshot, looked up by the snapshot time
 by_time = {}

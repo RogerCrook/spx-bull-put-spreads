@@ -4,10 +4,12 @@ CHECK: SPX against SPXW forwards on 1 and 5 August 2024 (tab:validation)
 
 What this file is for:
     tab:validation says that the forwards from SPX and from SPXW options with
-    the same expiry date differ by 0.048 to 0.100 index points on 1 August 2024
-    (a calm day) and by 0.135 to 0.601 on 5 August 2024 (VIX at 65), at most
-    0.011% of spot. Those figures come from the methodology report. This file
-    computes them again from the stored stage-2 output.
+    the same expiry date, at every snapshot except the stock close, differ by
+    a median of 0.08 index points on 1 August 2024 (a calm day) and 0.39 on
+    5 August 2024, at single snapshots by up to 3.3 and 7.4 points (0.06% and
+    0.14% of spot). Until 2026-10-27 it gave the methodology report's ranges
+    (0.048 to 0.100 and 0.135 to 0.601 points). This file computes the figures
+    from the stored stage-2 output.
 
     Stage 2 stores one forward per (snapshot, root, expiry) on every row of
     that slice. For each snapshot and each expiry date that both SPX and SPXW

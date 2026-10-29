@@ -1,11 +1,12 @@
 """
-FIGURE - the implied volatility smile on two days (thesis §1.9, Figure "fig:smile")
+FIGURE - the implied volatility smile on two days (thesis Figure fig:smile, in sec:greeks)
 
 What this file does:
     It READS the stage-2 output (Data/04_greeks/ folder) for two snapshots, keeps the
     out-of-the-money quotes of one expiry, and plots implied volatility against
     strike / forward. It changes no data file. It writes one picture:
-        Masterarbeit Tex File from claude/figures/smile.pdf
+        Masterarbeit_Tex_file/figures/smile.pdf
+    (the folder was called "Masterarbeit Tex File from claude" until 2026-10-29)
 
     The two snapshots (10:00, expiry near 30 days):
         8 June 2021   (calm)    root SPXW, expiry 2021-07-07, 29 days
@@ -14,10 +15,10 @@ What this file does:
     no strikes listed below K/F = 0.70, so the monthly SPX contract is used.
 
     On each curve it marks
-        a circle: the at-the-money volatility, fitted as in thesis Definition 1.19
+        a circle: the at-the-money volatility, fitted as in thesis Definition def:atm
                   (quadratic in x = log(K/F), out-of-the-money quotes, |x| < 0.05)
         squares:  the strategy's strike targets K = F * exp(-k * sigma_atm * sqrt(tau))
-                  for k = 1 (short leg) and k = 2.3 (long leg), thesis §2.1
+                  for k = 1 (short leg) and k = 2.3 (long leg), thesis Definition def:entry
 
 HOW TO RUN IT
     In PowerShell, from the project folder:   python Code/s13_figure_smile.py
@@ -37,7 +38,7 @@ import matplotlib.pyplot as plt
 # ----------------------------------------------------------------------
 
 GREEKS_FOLDER = "Data/04_greeks"
-OUT_FILE = os.path.join("Masterarbeit Tex File from claude", "figures", "smile.pdf")
+OUT_FILE = os.path.join("Masterarbeit_Tex_file", "figures", "smile.pdf")
 
 # one entry per curve: (snapshot time, monthly file, root, expiry, legend text, colour)
 DAYS = [
@@ -45,9 +46,9 @@ DAYS = [
     ("2020-03-16 10:00:00", "spx_2020-03.csv", "SPX",  "2020-04-17", "16 March 2020", "#b8462e"),
 ]
 
-K_SHORT = 1.0                           # strike offsets of the strategy, thesis §2.1
+K_SHORT = 1.0                           # strike offsets of the strategy, thesis Definition def:entry
 K_LONG = 2.3
-BAND = 0.05                             # ATM fitting band, thesis Definition 1.19
+BAND = 0.05                             # ATM fitting band, thesis Definition def:atm
 
 # only these columns are needed; reading fewer columns is much faster
 COLUMNS = ["quote_datetime", "root", "expiration", "dte", "strike",
@@ -102,7 +103,7 @@ def main():
         is_otm_call = (s["option_type"] == "C") & (s["m"] >= 1)
         otm = s[is_otm_put | is_otm_call].sort_values("strike")   # | means "or"
 
-        # ATM volatility as in Definition 1.19: quadratic fit in x = log(K/F) on |x| < BAND.
+        # ATM volatility as in Definition def:atm: quadratic fit in x = log(K/F) on |x| < BAND.
         # np.polyfit(x, y, 2) returns [c, b, a] for c*x^2 + b*x + a; the last one is sigma(0).
         x = np.log(otm["m"])
         in_band = np.abs(x) < BAND
@@ -123,12 +124,22 @@ def main():
               "| short K/F %.3f at %.2f%%" % (m_short, 100 * iv_short),
               "| long K/F %.3f at %.2f%%" % (m_long, 100 * iv_long))
 
-        # the curve, the ATM circle, the two leg squares
+        # the curve: "-" draws a solid line, lw is its width, and label is the
+        # text this curve gets in the legend
         ax.plot(otm["m"], 100 * otm["iv"], "-", lw=1.1, color=colour,
                 label=label + ", " + str(days_left) + " days")
+        # the ATM circle at K/F = 1: "o" draws a circle, mfc="white" fills it
+        # white (marker face colour), ms is its size, and zorder=3 draws it on
+        # top of the line (things with a higher zorder are drawn later)
         ax.plot([1.0], [100 * sigma_atm], "o", color=colour, mfc="white", ms=5, zorder=3)
+        # the two legs: the list holds (K/F, implied vol, name) for each leg, and
+        # the loop takes one leg at a time
         for m_leg, iv_leg, name in [(m_short, iv_short, "short"), (m_long, iv_long, "long")]:
+            # "s" draws a square marker at the leg
             ax.plot([m_leg], [100 * iv_leg], "s", color=colour, ms=4.5, zorder=3)
+            # annotate writes the word "short" or "long" next to the square;
+            # textcoords="offset points" and xytext=(4, 6) put the text 4 points
+            # to the right of and 6 points above the square
             ax.annotate(name, (m_leg, 100 * iv_leg), textcoords="offset points",
                         xytext=(4, 6), fontsize=8, color=colour)
 
@@ -138,7 +149,7 @@ def main():
     ax.set_xlabel(r"strike / forward  $K/F_t$")
     ax.set_ylabel("implied volatility (%)")
     ax.legend(frameon=False, loc="lower left")    # lower left is empty space in this plot
-    fig.tight_layout()
+    fig.tight_layout()                            # shrink the margins to fit the axis labels
 
     os.makedirs(os.path.dirname(OUT_FILE), exist_ok=True)   # make figures/ if missing
     fig.savefig(OUT_FILE)

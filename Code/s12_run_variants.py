@@ -47,13 +47,13 @@ VARIANTS = {
     # of the strategy, only switch off one of the two rules for bad DATA, so the
     # thesis can show what that rule changes (sec:monitoring, sec:broken-quotes).
     # without the broken-quote rule (C14)
-    "base_mid_noquote":    {"EXECUTION": "mid",   "QUOTE_RULE": "off"},
-    "base_cross_noquote":  {"EXECUTION": "cross", "QUOTE_RULE": "off"},
-    "p15_mid_noquote":     {"EXECUTION": "mid",   "BAND_PROFIT": 0.15, "QUOTE_RULE": "off"},
-    "p15_cross_noquote":   {"EXECUTION": "cross", "BAND_PROFIT": 0.15, "QUOTE_RULE": "off"},
+    "base_mid_without_quote_rule":    {"EXECUTION": "mid",   "QUOTE_RULE": "off"},
+    "base_cross_without_quote_rule":  {"EXECUTION": "cross", "QUOTE_RULE": "off"},
+    "p15_mid_without_quote_rule":     {"EXECUTION": "mid",   "BAND_PROFIT": 0.15, "QUOTE_RULE": "off"},
+    "p15_cross_without_quote_rule":   {"EXECUTION": "cross", "BAND_PROFIT": 0.15, "QUOTE_RULE": "off"},
     # without the broken-quote rule and without the stock-close rule (C9)
-    "base_mid_noclose":    {"EXECUTION": "mid",   "QUOTE_RULE": "off", "SKIP_CLOSE_SNAPSHOT": False},
-    "base_cross_noclose":  {"EXECUTION": "cross", "QUOTE_RULE": "off", "SKIP_CLOSE_SNAPSHOT": False},
+    "base_mid_without_close_rule":    {"EXECUTION": "mid",   "QUOTE_RULE": "off", "SKIP_CLOSE_SNAPSHOT": False},
+    "base_cross_without_close_rule":  {"EXECUTION": "cross", "QUOTE_RULE": "off", "SKIP_CLOSE_SNAPSHOT": False},
 }
 
 
@@ -67,23 +67,18 @@ def run_one(name):
     for setting_name in settings:
         setattr(backtest, setting_name, settings[setting_name])
 
-    # runs with the end-of-day fix (review_log.md C9) get "_c8c9" in their
-    # names, as in s11_backtest.py, so they never overwrite results made without it
-    tag = ""
-    if backtest.SKIP_CLOSE_SNAPSHOT:
-        tag = "_c8c9"
-    # runs with the broken-quote rule (review_log.md C14) get a "q" on top
-    if backtest.QUOTE_RULE == "on":
-        tag = tag + "q"
-    # every run on the data made since 2026-10-27 gets "_c15" (review_log.md C15)
-    tag = tag + "_c15"
+    # The variant's name already says everything that differs from the base
+    # case (e.g. "p15_cross", "base_mid_without_quote_rule"), so the output
+    # files are named after it alone. Until 2026-10-28 a tag of review_log.md
+    # item numbers was added ("_c8c9", "q", "_c15"); those older runs were
+    # removed on 2026-10-29.
 
-    # the output files carry the variant's name, e.g. "trades_t45_cross_c8c9q_c15.csv"
-    backtest.TRADES_FILE = "trades_" + name + tag + ".csv"
-    backtest.EQUITY_FILE = "equity_" + name + tag + ".csv"
-    backtest.QUARTERS_FILE = "quarters_" + name + tag + ".csv"
-    backtest.QUOTES_FILE = "quotes_" + name + tag + ".csv"       # the quote test (C14)
-    backtest.MISSING_FILE = "missing_" + name + tag + ".csv"     # the missing legs (C15)
+    # the output files carry the variant's name, e.g. "trades_t45_cross.csv"
+    backtest.TRADES_FILE = "trades_" + name + ".csv"
+    backtest.EQUITY_FILE = "equity_" + name + ".csv"
+    backtest.QUARTERS_FILE = "quarters_" + name + ".csv"
+    backtest.QUOTES_FILE = "quotes_" + name + ".csv"       # the quote test (C14)
+    backtest.MISSING_FILE = "missing_" + name + ".csv"     # the missing legs (C15)
 
     print("=" * 70)
     print("VARIANT", name, settings)

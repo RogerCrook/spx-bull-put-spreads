@@ -13,12 +13,15 @@ What this file is for:
 
     It also compares the SPX and SPXW forwards of the same expiry date at the
     same snapshot. sec:monitoring cites this: on the 17 days they agree to a
-    median of 0.06 index points, and the large differences, up to 7.7 points,
-    all occur at 16:00 (the last line of the printout shows at which times).
+    median of 0.06 index points, differences above 2 points occur 10 times at
+    16:00 and 3 times at all other snapshots together, and every difference
+    above 3.3 points, up to 7.7, occurs at 16:00 (the last line of the
+    printout shows at which times).
 
     Rewritten 2026-10-27 in the style of Code/s03_rates.py; same calculations
     and the same printout as before, plus that last line (old version in
-    old_versions/checks_before_style_2026-10-27/).
+    a folder old_versions/,
+    removed on 2026-10-29).
 
 Data: 17 days of Data/02_clean/ and Data/04_greeks/ (read month by month, only the day kept).
 Read-only: writes nothing. Takes several minutes.

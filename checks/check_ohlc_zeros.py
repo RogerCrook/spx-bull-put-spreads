@@ -5,8 +5,10 @@ CHECK: how often the open-high-low-close columns of the raw data are zero
 What this file is for:
     sec:cleaning says the open-high-low-close (OHLC) columns are discarded,
     because when nothing trades in a 15-minute interval the file writes zero
-    instead of leaving the field empty, "which is the case for 94.5% of rows".
-    That figure comes from the methodology report. This file counts it again.
+    instead of leaving the field empty, which is the case for 94.1% of the
+    rows on the first trading day of each month (92.5 to 95.9% by year).
+    Until 2026-10-27 the thesis gave the methodology report's 94.5%. This file
+    counts it.
 
     OHLC are the first, highest, lowest and last TRADE price in the interval.
     A row counts as "OHLC zero" when all four are 0.

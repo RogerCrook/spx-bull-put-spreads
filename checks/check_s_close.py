@@ -7,7 +7,7 @@ What this file is for:
     in the option data, and that at the last snapshot of the day (16:15, or
     13:15 on early-close days), after the stocks have stopped trading, this
     midpoint is no longer a price: it differs from the official close by more
-    than 1% on 118 of the 3,675 days, up to 31.5%, and on 16 March 2020 it was
+    than 1% on 123 of the 3,675 days, up to 600% (on 6 May 2014), and on 16 March 2020 it was
     2,583 against a close of 2,386. At the stock-close snapshot (16:00, or
     13:00) it differs by a median of 0.009% and at most 0.35%.
 
@@ -16,7 +16,8 @@ What this file is for:
 
     Rewritten 2026-10-27 in the style of Code/s03_rates.py; same calculations
     and the same printout as before (old version in
-    old_versions/checks_before_style_2026-10-27/).
+    a folder old_versions/,
+    removed on 2026-10-29).
 
     Since 2026-10-27 (review_log.md C15) stage 1 itself uses the official close
     as S at the last snapshot, and keeps the recorded quote in its own column,

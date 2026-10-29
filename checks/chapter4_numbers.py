@@ -10,16 +10,21 @@ What this file is for:
     This file reads them and computes every number chapter 4 of the thesis
     reports (and tab:costs in chapter 3): the results tables, the yearly and
     monthly returns, the costs, the losses by rule, and the test of the
-    variant. Each number is printed the way the .tex writes it, e.g. 15600 as
+    variant (commented out in the thesis since T68, 2026-10-29). (The figures of sec:realised-entry-delta come from
+    checks/entry_delta_backtest.py since 2026-10-28.) Each number is printed the way the .tex writes it, e.g. 15600 as
     "$15{,}600$", next to "yes" if that exact text is in the thesis.
 
-    Three sets of runs are read, each with the base case and the variant with
-    the profit exit at Delta_0 - 0.15 ("p15"), at mid and crossing the spread:
-      thesis                          the runs the thesis reports (all three data fixes)
-      without the broken-quote rule   sec:broken-quotes quotes their returns and test
-      without the stock-close rule    sec:monitoring quotes their returns
-    For the two older sets most numbers are of course not in the thesis; only
-    the few it quotes should say "yes".
+    Two sets of runs are read in full, each with the base case and the variant
+    with the profit exit at Delta_0 - 0.15 ("p15"), at mid and crossing the spread:
+      thesis                          the runs the thesis reports (both data rules on, rebuilt data)
+      without the broken-quote rule   sec:broken-quotes quotes their returns (and the commented-out test)
+    For the second set most numbers are of course not in the thesis; only the
+    few it quotes should say "yes". At the end, the return per year of the base
+    case without the stock-close rule (sec:monitoring quotes it). For that rule
+    only the base case was run on the current data, so only these two numbers.
+
+    All runs are the current ones in results/ (made 2026-10-28 on the rebuilt
+    data). Until 2026-10-28 this file read older runs (removed on 2026-10-29).
 
     The formulas (CLAUDE.md section 6):
       return of a period = P&L of the period / average margin held in it
@@ -31,9 +36,10 @@ What this file is for:
                            (blocks of 12 months, 10,000 resamples, seed 1)
 
     This replaces checks/verify_tex_c14.py and checks/thesis_numbers.py (kept in
-    old_versions/checks_before_style_2026-10-27/), with the same formulas.
+    a folder old_versions/,
+    removed on 2026-10-29), with the same formulas.
 
-Data: results/trades_*.csv and results/equity_*.csv of the 12 runs.
+Data: results/trades_*.csv and results/equity_*.csv of the 10 runs named below.
 Read-only: writes nothing. Takes about a minute (the bootstrap).
 Run it from the main folder:   python checks/chapter4_numbers.py
 """
@@ -44,20 +50,20 @@ import pandas as pd                          # pandas works with tables
 
 
 RESULTS = "results/"
-TEX_FILE = "Masterarbeit Tex File from claude/Masterarbeit von Claude.tex"
+TEX_FILE = "Masterarbeit_Tex_file/Masterarbeit_Tex_file.tex"   # folder and file renamed 2026-10-29
 
-# the three sets of runs: set name -> {run: file name part}
+# the two full sets of runs: set name -> {run: file name part}
 RUN_SETS = {
     "thesis": {
-        "base_mid": "base_mid_c8c9q", "base_cross": "base_cross_c8c9q",
-        "p15_mid": "p15_mid_c8c9q", "p15_cross": "p15_cross_c8c9q"},
-    "without the broken-quote rule": {
-        "base_mid": "base_mid_c8c9", "base_cross": "base_cross_c8c9",
-        "p15_mid": "p15_mid_c8c9", "p15_cross": "p15_cross_c8c9"},
-    "without the stock-close rule": {
-        "base_mid": "mid_latest", "base_cross": "base_cross",
+        "base_mid": "base_mid", "base_cross": "base_cross",
         "p15_mid": "p15_mid", "p15_cross": "p15_cross"},
+    "without the broken-quote rule": {
+        "base_mid": "base_mid_without_quote_rule", "base_cross": "base_cross_without_quote_rule",
+        "p15_mid": "p15_mid_without_quote_rule", "p15_cross": "p15_cross_without_quote_rule"},
 }
+
+# the base case without the stock-close rule (only the base case was run): run -> file name part
+NO_CLOSE_RUNS = {"base_mid": "base_mid_without_close_rule", "base_cross": "base_cross_without_close_rule"}
 
 MONTH_NAMES = {"01": "January", "02": "February", "03": "March", "04": "April",
                "05": "May", "06": "June", "07": "July", "08": "August",
@@ -99,13 +105,15 @@ def big(x):
 
 
 def load(name):
-    """Read the trades and the daily equity of one run, e.g. load("base_mid_c8c9q")."""
+    """Read the trades and the daily equity of one run, e.g. load("base_mid")."""
 
     trades = pd.read_csv(RESULTS + "trades_" + name + ".csv")
     equity = pd.read_csv(RESULTS + "equity_" + name + ".csv")
 
-    # The first base-case run (mid_latest) was written before the equity file
-    # had the columns pnl_day, year and quarter, so they are made here when missing.
+    # The first base-case run (of 2026-10-08, since removed) was written
+    # before the equity file had the columns pnl_day, year and quarter, so they
+    # are made here when missing. (The runs read now all have them; this is
+    # kept for reading older runs.)
     if "pnl_day" not in equity:
         # the P&L of each day = today's total minus yesterday's total;
         # .diff() does exactly that, and gives nothing (NaN) on the first day,
@@ -271,21 +279,12 @@ def all_numbers(files):
     cycles_a_year = len(trades_cross) / (len(equity_cross) / 252.0)
     numbers.append((p, "cycles a year", "$\\approx %d$ cycles a year" % round(cycles_a_year)))
 
-    # ---- sec:backtest-design and sec:realised-entry-delta (base case at mid) ----
+    # ---- sec:backtest-design (base case at mid) ----
     numbers.append(("sec:backtest-design", "snapshots with a leg missing",
                     "at $%d$ snapshots in the base-case" % trades_mid["skipped"].sum()))
-    p = "sec:realised-entry-delta"
-    numbers.append((p, "entries", "The $%d$ entries" % len(trades_mid)))
-    dte_recovery = trades_mid.loc[trades_mid["maturity_rule"] == "recovery", "dte0"].median()
-    dte_cap = trades_mid.loc[trades_mid["maturity_rule"] == "cap", "dte0"].median()
-    dte_target = trades_mid.loc[trades_mid["maturity_rule"] == "target", "dte0"].median()
-    # a median of an even number of values can end in .5 (67.5): round half up, as written
-    numbers.append((p, "median days under recovery", "median $%d$ days under recovery" % np.floor(dte_recovery + 0.5)))
-    numbers.append((p, "median days cap / target", "$%d$ at the cap, against $%d$ at the target" % (dte_cap, dte_target)))
-    delta0 = trades_mid["delta0"]
-    # .quantile(0.05): the value 5% of the entries lie below
-    numbers.append((p, "entry delta", "median of $%.3f$, a $5$--$95\\%%$ range of $%.3f$--$%.3f$ and extremes $%.3f$ and $%.3f$" % (
-        delta0.median(), delta0.quantile(0.05), delta0.quantile(0.95), delta0.min(), delta0.max())))
+    # (Until 2026-10-28 four figures of sec:realised-entry-delta were looked up here
+    # too. That subsection was rewritten (review_log T63); all its figures now come
+    # from checks/entry_delta_backtest.py.)
     numbers.append(("sec:robustness", "profit exits at mid", "($%d$ of $%d$ at mid)" % (
         count(trades_mid, "reason", "profit"), len(trades_mid))))
 
@@ -350,12 +349,12 @@ def all_numbers(files):
     numbers.append((p, "p15 cross against base cross", "($%.1f\\%%$ against $%.1f\\%%$)" % (
         per_year(equity_p15c), per_year(equity_cross))))
 
-    # the text says the variant's three worst months are those of the base case
+    # the text says the variant does not avoid the three worst months of the base case
     _, p15_month_pnl = periods(equity_p15c, "month")
     p15_worst_three = set(p15_month_pnl.sort_values().index[:3])   # a set: the order does not matter
     base_worst_three = set(worst.index[:3])
     if p15_worst_three == base_worst_three:
-        numbers.append((p, "three worst months shared", "three worst months are those"))
+        numbers.append((p, "three worst months shared", "does not avoid the three worst months"))
     else:
         numbers.append((p, "three worst months shared", "(NOT TRUE for this set)"))
 
@@ -426,3 +425,23 @@ for set_name in RUN_SETS:
     else:
         print("%d numbers, %d of them in the thesis as written" % (len(numbers), found))
     print()
+
+
+# ---- the base case without the stock-close rule (sec:monitoring) ----------------------
+
+print("=" * 100)
+print("RUNS: without the stock-close rule, base case only   (files:", ", ".join(NO_CLOSE_RUNS.values()), ")")
+print("=" * 100)
+
+for run in NO_CLOSE_RUNS:
+    _, equity = load(NO_CLOSE_RUNS[run])     # "_": the trades are not needed here
+    text = "$%.1f\\%%$" % per_year(equity)
+    result = in_thesis(text)
+    if result is None:
+        mark = "?"                           # no .tex to look in
+    elif result:
+        mark = "yes"
+    else:
+        mark = "-"
+    print("%-3s  %-27s %-42s %s" % (mark, "sec:monitoring", run + " return per year", text))
+print()

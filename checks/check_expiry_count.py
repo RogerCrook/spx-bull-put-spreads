@@ -3,10 +3,11 @@ CHECK: how many expiries were listed on the first and the last day the thesis na
 (reproduction inventory, row 13)
 
 What this file is for:
-    sec:data says the expiry grid became much denser: "from 8 listed expiries
-    on 28 September 2012 to 60 on 28 July 2026". That figure comes from the
-    methodology report. This file counts the expiries again, straight from
-    the raw Cboe files of those two days.
+    sec:data says the expiry grid became much denser, from 8 expiry dates
+    between 4 and 100 days away on 28 September 2012 to 30 on 28 July 2026.
+    (Until 2026-10-27 it said "8 ... to 60", from the methodology report, whose
+    60 counted SPX and SPXW separately.) This file counts the expiries straight
+    from the raw Cboe files of those two days.
 
     "Listed" can mean two things, so both are printed:
       - every expiry date quoted that day (also LEAPS years away), and

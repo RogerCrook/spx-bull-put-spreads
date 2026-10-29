@@ -1,24 +1,29 @@
 """
 CHECK: exits and trading cost at the stock-close snapshot, in the runs made
-before the rule "no decision at the stock close" (sec:monitoring)
-(reproduction inventory, row 23; review_log C9, "check C")
+without the rule "no decision at the stock close" (sec:monitoring, "Decision
+times"; reproduction inventory, row 23; review_log C9, "check C")
 
 What this file is for:
-    sec:monitoring says that in the backtest as first run, with decisions at
-    every snapshot, 16:00 had more exits than its neighbouring snapshots in
-    all four reported runs (base case at mid: 29, against 18 at 15:45 and 17
-    at 16:15), split evenly between profit and loss exits, and that crossing
-    the spread cost about twice as much there (base case: 4.54 index points
-    per entry and 3.78 per exit, against about 2.0 per entry and 2.3 per exit
-    at 15:45 and 16:15). The script that first produced these was lost; this
-    file computes them again from the trade logs of those runs.
+    sec:monitoring says that in runs of the backtest with decisions at every
+    snapshot, 16:00 has more exits than its neighbouring snapshots (15:45 and
+    16:15), split about evenly between profit and loss exits, and that
+    crossing the spread costs about twice as much there. This file counts the
+    exits at those three snapshots and computes the cost of crossing the
+    spread there, from the trade logs.
 
     The cost of crossing the spread, per trade:
       at entry:  credit at mid  minus  credit received   (credit_mid - credit)
       at exit:   cost paid      minus  cost at mid       (cost - cost_mid)
 
-Data: the trade logs of the four runs without the fix, in results/
-(made by the code now in old_versions/, before 2026-10-23).
+    Since 2026-10-29 it reads the two current runs of the base case with the
+    rule switched off (made 2026-10-28 by Code/s11_backtest.py through
+    Code/s12_run_variants.py, SKIP_CLOSE_SNAPSHOT = False, and QUOTE_RULE =
+    "off" as well). Until then it read the four first runs of 2026-10-08
+    (made by an earlier version of the code, both removed on 2026-10-29),
+    which gave the figures 29 / 18 / 17 and 4.54 / 3.78 of the thesis then.
+
+Data: results/trades_base_mid_without_close_rule.csv,
+      results/trades_base_cross_without_close_rule.csv.
 Read-only: writes nothing. Takes a second.
 Run it from the main folder:   python checks/check_close_snapshot.py
 """
@@ -26,12 +31,10 @@ Run it from the main folder:   python checks/check_close_snapshot.py
 import pandas as pd                          # pandas works with tables
 
 
-# the four runs as first made: name in the thesis -> trade log
+# the two runs without the rule: name in the thesis -> trade log
 RUNS = {
-    "base, mid":      "results/trades_mid_latest.csv",
-    "base, cross":    "results/trades_base_cross.csv",
-    "p15, mid":       "results/trades_p15_mid.csv",
-    "p15, cross":     "results/trades_p15_cross.csv",
+    "base, mid":      "results/trades_base_mid_without_close_rule.csv",
+    "base, cross":    "results/trades_base_cross_without_close_rule.csv",
 }
 
 CLOSE_AND_NEIGHBOURS = ["15:45", "16:00", "16:15"]   # the stock close and the snapshots around it

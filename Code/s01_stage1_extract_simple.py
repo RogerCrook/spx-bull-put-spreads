@@ -2,8 +2,9 @@
 STAGE 1 - clean all the raw CSV files and save them, one file per month.
 (As CSV: see FILE_FORMAT below. Parquet is possible but was not used.)
 
-This is the notebook (stage1_simple.ipynb) wrapped in a loop.
-The function clean_one_file() below does exactly what cells 4 to 16 do.
+It began as a notebook (stage1_simple.ipynb, not kept in this folder). The
+function clean_one_file() below does what its cells 4 to 16 did, and the
+comments "notebook cell N" below still number the steps in that order.
 
 HOW TO RUN IT
   1. Run it from the project folder (the one that holds Data/01_raw_options).
@@ -12,8 +13,8 @@ HOW TO RUN IT
 
 It is safe to stop it and run it again - it skips months it already finished.
 
-CHANGED 2026-10-27 (review_log.md C15; the version before is in
-old_versions/s01_stage1_extract_simple_2026-10-27_before_c15.py):
+CHANGED 2026-10-27 (review_log.md C15; the version before is the one in
+commit 4aca3ae, tag thesis-v1):
   - the index level S at the snapshot after the stock close (16:15, or 13:15 on
     early-close days) is the official daily close of the index, because the
     index quote there is no longer a price. At every other snapshot S is the

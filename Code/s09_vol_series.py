@@ -26,9 +26,9 @@ THE STRESS INDICATOR (thesis, Definition "Stress indicator")
     Because the threshold only uses the past, the first 252 days of the
     sample have no threshold (nothing to compare with yet).
 
-    As a named alternative (thesis, "Why a trailing quantile") we also mark
-    days above a fixed level, FIXED_LEVEL. It is only for the sensitivity
-    analysis.
+    As an alternative we also mark days above a fixed level, FIXED_LEVEL
+    (column stress_fixed). The thesis does not use it: sec:stress says in one
+    sentence why a trailing percentile is used instead.
 
 HOW TO RUN IT
     python Code/s09_vol_series.py

@@ -24,8 +24,9 @@ WHAT IS IN THIS VERSION (build steps 1 to 3)
       of each cycle is its MARGIN, the most the position can lose. That margin is
       held in T-bills and earns the 3-month rate. The open position is marked to
       the mid quote at the last snapshot of each day. One row per day goes to
-      equity.csv, and the daily return is the day's change in total P&L divided
-      by the margin held at the start of the day ("return on margin").
+      EQUITY_FILE (equity_<run>.csv). The return of a period (a quarter, a
+      year) is its P&L divided by the average margin held in it ("return on
+      margin", function period_returns, sec:backtest-design).
 
     - the end of the day (decided 2026-10-23, review_log.md C8 and C9).
         C9: the snapshot at the stock close (16:00, or 13:00 on early-close days)
@@ -38,10 +39,10 @@ WHAT IS IN THIS VERSION (build steps 1 to 3)
             to be the official daily close, so the stored deltas are right and
             the backtest uses them as they are. (Until then the backtest
             corrected those deltas itself, switch USE_OFFICIAL_CLOSE; that code
-            is in old_versions/s11_backtest_2026-10-27_before_c15.py.)
+            is in commit 4aca3ae, tag thesis-v1.)
 
     - broken option quotes (decided 2026-10-25, review_log.md C14; developed
-      in experiments/quote_filter). Also a problem of the DATA: some quotes are
+      in a separate experiment, removed 2026-10-29). Also a problem of the DATA: some quotes are
       broken for one snapshot, e.g. 12.3 / 52.6 for a put quoted 48.3 / 50.0 a
       snapshot earlier, which gives a meaningless implied vol and delta, and so
       a false exit. A leg's quote counts as broken when its implied vol jumped
@@ -49,8 +50,8 @@ WHAT IS IN THIS VERSION (build steps 1 to 3)
       was then AND it widened more than its mid moved (3 vol points, 3 times).
       Only the past is used, never the next snapshot. A broken quote is treated
       like a missing one: no decision, the next snapshot takes over. Switch
-      QUOTE_RULE below; with "off" the backtest gives exactly the results of
-      2026-10-23 (the "_c8c9" files).
+      QUOTE_RULE below; "off" uses every quote as it comes (the comparison
+      runs named "..._without_quote_rule").
 
 HOW TO RUN IT
     python Code/s11_backtest.py
@@ -90,9 +91,9 @@ RECOVERY_FRACTION = 1.0                    # lambda: how much of the deficit to 
 #   "latest"     (base case, decided 2026-10-08): after a loss, the deficit
 #                becomes THAT loss, replacing whatever was left; after a profit
 #                it shrinks by the profit, never below 0.
-#   "cumulative" (sensitivity case, the thesis's original definition): losses
+#   "cumulative" (sensitivity case, not run; the definition of an early draft): losses
 #                add up, profits pay them down, never below 0.
-#   "none"       (sensitivity case): no recovery, always the 30-day spread.
+#   "none"       (sensitivity case, not run): no recovery, always the 30-day spread.
 RECOVERY_MODE = "latest"
 
 STRESS_WINDOW = 252                        # past days used for the stress percentile
@@ -124,7 +125,7 @@ SKIP_CLOSE_SNAPSHOT = True
 #          opening at that snapshot
 # "count": the test is measured for every leg we hold or open and written to
 #          QUOTES_FILE, but nothing changes: the trades are those of "off"
-# "off":   quotes are used as they come (the old behaviour, the "_c8c9" files)
+# "off":   quotes are used as they come (the old behaviour, before 2026-10-25)
 QUOTE_RULE = "on"
 
 # A quote is broken when ALL THREE hold, against the same option's quote at the
@@ -144,17 +145,17 @@ BROKEN_WIDTH_RATIO = 3
 
 RUN_NAME = EXECUTION + "_" + RECOVERY_MODE
 
-# runs with the end-of-day fix get "_c8c9" in their names, so they never
-# overwrite the results made without it
-if SKIP_CLOSE_SNAPSHOT:
-    RUN_NAME = RUN_NAME + "_c8c9"
-# runs with the broken-quote rule get a "q" on top ("_c8c9q"), for the same reason
-if QUOTE_RULE == "on":
-    RUN_NAME = RUN_NAME + "q"
-# every run on the data made since 2026-10-27 (S = official close after the
-# close, puts down to K/S = 0.30; review_log.md C15) gets "_c15" at the end,
-# so it never overwrites a result made on the earlier data
-RUN_NAME = RUN_NAME + "_c15"
+# a run with one of the two data rules switched off says so in its name, so
+# it never overwrites the results with both rules on
+if not SKIP_CLOSE_SNAPSHOT:
+    RUN_NAME = RUN_NAME + "_without_close_rule"
+# "count" trades like "off", but also writes the quote test to QUOTES_FILE
+if QUOTE_RULE == "off":
+    RUN_NAME = RUN_NAME + "_without_quote_rule"
+if QUOTE_RULE == "count":
+    RUN_NAME = RUN_NAME + "_quote_rule_counted"
+# (until 2026-10-28 the names carried review_log.md item numbers: "_c8c9",
+# "q", "_c15"; those older runs were removed on 2026-10-29)
 TRADES_FILE = "trades_" + RUN_NAME + ".csv"        # one row per finished trade
 EQUITY_FILE = "equity_" + RUN_NAME + ".csv"        # one row per trading day
 QUARTERS_FILE = "quarters_" + RUN_NAME + ".csv"    # one row per quarter
@@ -197,7 +198,6 @@ def price_when_buying(row):
 def find_put(puts, strike_wanted):
     """
     Find the listed put whose strike is closest to the strike we want.
-    (Same as in s10_entry_delta.py.)
 
       puts          : table of puts for ONE slice (one time, root, expiry)
       strike_wanted : the target strike, for example 5437.3
@@ -966,8 +966,9 @@ def main():
                 if short_leg is None or long_leg is None:
                     # a leg is not quoted here: skip the tests, try next snapshot
                     position["skipped"] = position["skipped"] + 1
-                    # write down when and which leg, so that the cause can be
-                    # looked up later (checks/check_missing_legs.py)
+                    # write down when and which leg (the file MISSING_FILE), so
+                    # that the cause can be looked up later (review_log C15, T26;
+                    # the script that did it was removed on 2026-10-29)
                     missing_rows.append({"when": when,
                                          "root": position["root"],
                                          "expiration": position["expiration"],

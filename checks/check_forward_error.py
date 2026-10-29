@@ -4,10 +4,12 @@ CHECK: how far parity at a single strike misses the forward, by distance from th
 
 What this file is for:
     sec:forward-impl says that far from the money the parity estimate
-    F = K + (C - P) / D is biased: "on one snapshot the median error was 0.002
-    index points for strikes within 1% of the forward, 0.274 at 3 to 6% and
-    0.416 beyond 12%". The report did not record which snapshot. This file
-    recomputes the figures on two named snapshots, the two of Figure fig:smile.
+    F = K + (C - P) / D is biased: on 8 June 2021 at 10:00 (SPXW, expiry
+    7 July 2021) the median difference from the stored forward is 0.000 index
+    points for strikes within 1% of the forward, -0.30 at 3 to 6% and -0.84
+    beyond 12%. (Until 2026-10-27 it gave the methodology report's 0.002 /
+    0.274 / 0.416 for an unnamed snapshot.) This file computes the figures on
+    the two snapshots of Figure fig:smile, and the thesis uses the first.
 
     For every strike where both the call and the put are quoted, it computes
     the single-strike estimate K + (C - P)/D from the raw quotes (C and P are

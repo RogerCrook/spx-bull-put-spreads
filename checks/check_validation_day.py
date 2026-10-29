@@ -1,16 +1,18 @@
 """
-CHECK: the three data rows of tab:validation that had no day recorded
+CHECK: call and put, smile shape and Greek peaks of tab:validation, on two named slices
 (reproduction inventory, row 21: call/put, smile shape, Greeks peak)
 
 What this file is for:
-    tab:validation says, from the methodology report:
-      - "Call and put at the same strike: same implied volatility, 22.14% and
-        22.09% at strike 5175, largest difference 0.35 volatility points
-        across 49 strikes",
-      - "implied volatility falls monotonically with strike across 389 strikes",
-      - "gamma, vega and theta peak at the money".
-    The report did not say which day. This file checks all three on the two
-    slices of fig:smile, both at 10:00:
+    The last two rows of tab:validation give, for the two slices of fig:smile:
+      - call and put at the same strike: 12.50% for both at 4,220 on 8 June
+        2021, largest difference 0.17 volatility points across 27 strikes
+        (0.72 across 30 on 16 March 2020),
+      - the smile never rises across the 66 out-of-the-money put strikes of
+        8 June 2021 (on 16 March 2020 it rises at 8 of 111 steps),
+      - vega peaks at the strike nearest the forward, gamma and theta within
+        1.7% of it (8 June 2021).
+    Until 2026-10-27 the table gave the methodology report's figures for no
+    named day. This file computes all three on the two slices, both at 10:00:
       8 June 2021, SPXW expiring 7 July 2021 (calm), and
       16 March 2020, SPX expiring 17 April 2020 (stress).
 

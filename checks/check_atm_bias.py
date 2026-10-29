@@ -4,11 +4,12 @@ CHECK: how much the one-sided fitting window moves the ATM volatility (rem:atm-b
 
 What this file is for:
     rem:atm-band says the fitting window |x| < 0.05 is cut on the call side at
-    about x = +0.03 (calls were cleaned only up to K/S = 1.03), and that "in a
-    simulation against an assumed smile shape the bias is about 0.01
-    volatility points, against about 0.03 from quote noise". The simulation
-    behind those numbers was lost and its inputs were not recorded. This file
-    redoes it with every input stated and taken from one real slice:
+    about x = +0.03 (calls were cleaned only up to K/S = 1.03), and that in a
+    simulation the one-sided window shifts the ATM volatility by 0.01
+    volatility points, while quote noise moves it by about 0.02. (Until
+    2026-10-27 it said "about 0.03 from quote noise", from a simulation that
+    was lost.) This file does the simulation with every input stated and taken
+    from one real slice:
     8 June 2021, 10:00, SPXW expiring 7 July 2021 (the calm smile of fig:smile).
 
     The steps:

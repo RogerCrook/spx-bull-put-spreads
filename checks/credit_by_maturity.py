@@ -13,9 +13,13 @@ What this file is for:
 
     Rewritten 2026-10-27 in the style of Code/s03_rates.py; same calculations
     and the same printout as before (old version in
-    old_versions/checks_before_style_2026-10-27/).
+    a folder old_versions/,
+    removed on 2026-10-29).
 
-Data: results/trades_base_mid_c8c9q.csv and results/trades_base_cross_c8c9q.csv.
+    Part 2 reads the current runs in results/ (made 2026-10-28 on the rebuilt
+    data); until 2026-10-28 it read older runs (removed on 2026-10-29).
+
+Data: results/trades_base_mid.csv and results/trades_base_cross.csv.
 Read-only: writes nothing. Takes a second.
 Run it from the main folder:   python checks/credit_by_maturity.py
 """
@@ -86,7 +90,7 @@ print("extra credit 90 vs 30 days: %.2f points" % (credits[90] - credits[30]))
 print()
 print("Part 2 (measured, base case)")
 
-for tag in ("base_mid_c8c9q", "base_cross_c8c9q"):
+for tag in ("base_mid", "base_cross"):
 
     trades = pd.read_csv("results/trades_" + tag + ".csv")
 
