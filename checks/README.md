@@ -63,6 +63,8 @@ stock-close rule; until then the first runs of 2026-10-08, since removed). Until
 | `check_atm_bias.py` | bias and noise of the ATM fit on the one-sided window (simulation, stated inputs) | `rem:atm-band` | 20 |
 | `check_validation_day.py` | call vs put vol, smile shape, where the Greeks peak, on the two `fig:smile` slices | `tab:validation` | 21 |
 | `fetch_gspc.py` | downloaded `Data/07_index_close/GSPC_daily.csv` (Yahoo ^GSPC) on 2026-10-22 | data source of `sec:data` | 12 |
+| `fetch_sp500tr.py` | downloaded `Data/09_total_return/SP500TR_daily.csv` (Yahoo ^SP500TR with dividends, and ^GSPC) on 2026-10-29; checks it against `GSPC_daily.csv`, daily gaps, calendar-year total returns (review_log T69) | `sec:sources`, data source of the index comparison in `sec:results-main`, `sec:robustness` | — |
+| `quarters_vs_index.py` | return of every quarter of the four reported runs against the S&P 500 with dividends, statistics of the quarterly returns, quarters ahead of the base case (review_log T69, run 2026-10-29) | "Against the index" in `sec:results-main`, `tab:quarters-base`, `tab:quarters-index`, the quarterly paragraph of `sec:robustness`, `tab:quarters-p15`, `tab:p15-quarters` | — |
 
 The C15 rerun (2026-10-27) was verified with review tools that were in
 `review_2026-10/` (removed 2026-10-29, see above): `test_c15_stage1_days.py` (the new
