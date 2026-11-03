@@ -23,7 +23,7 @@ What this file is for:
     Until 2026-11-03 (review_log T112) this file also computed the tables set
     aside in Masterarbeit_Tex_file/set_aside_ch4.tex (tab:results-base,
     tab:losses-months, tab:losses-rules, tab:p15, the old tab:results-years and
-    their text). That code is in commit cf6519a (tag thesis-v4).
+    their text). That code is in commit cf6519a (tag thesis-2026-11-03-unused-code-removed).
 
     Three sets of runs are read (all in results/, made 2026-10-28):
       thesis                           the four runs the thesis reports

@@ -39,7 +39,7 @@ The backtest no longer corrects the deltas after the close itself (the switch
 `USE_OFFICIAL_CLOSE` is gone). `s01`, `s07`,
 `s08` can be stopped and restarted (finished months are skipped, files are written
 under a temporary name first) and can be imported without running. The versions
-before are those of commit `4aca3ae` (tag `thesis-v1`).
+before are those of commit `4aca3ae` (tag `thesis-2026-10-27`).
 
 **Output names (since 2026-10-28):** a backtest run is named after its variant
 alone, e.g. `trades_base_mid.csv`, `trades_p15_cross.csv`; a run with one of the two

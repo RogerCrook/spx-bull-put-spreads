@@ -13,7 +13,7 @@ HOW TO RUN IT
 It is safe to stop it and run it again - it skips months it already finished.
 
 CHANGED 2026-10-27 (review_log.md C15; the version before is the one in
-commit 4aca3ae, tag thesis-v1):
+commit 4aca3ae, tag thesis-2026-10-27):
   - the index level S at the snapshot after the stock close (16:15, or 13:15 on
     early-close days) is the official daily close of the index, because the
     index quote there is no longer a price. At every other snapshot S is the

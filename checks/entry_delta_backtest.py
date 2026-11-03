@@ -14,7 +14,7 @@ What this file is for:
     sec:realised-entry-delta, set aside in Masterarbeit_Tex_file/set_aside_ch4.tex
     on 2026-10-30 (statistics, histogram, maturities, strikes against targets,
     yearly means, an absolute band [0.20, 0.40]), for the base case at mid and
-    crossing the spread. That code is in commit cf6519a (tag thesis-v4).
+    crossing the spread. That code is in commit cf6519a (tag thesis-2026-11-03-unused-code-removed).
 
 Data: results/trades_base_mid.csv.
 Read-only: writes nothing. Takes a second.

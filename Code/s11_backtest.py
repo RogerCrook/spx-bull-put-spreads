@@ -39,7 +39,7 @@ WHAT IS IN THIS VERSION (build steps 1 to 3)
             to be the official daily close, so the stored deltas are right and
             the backtest uses them as they are. (Until then the backtest
             corrected those deltas itself, switch USE_OFFICIAL_CLOSE; that code
-            is in commit 4aca3ae, tag thesis-v1.)
+            is in commit 4aca3ae, tag thesis-2026-10-27.)
 
     - broken option quotes (decided 2026-10-25, review_log.md C14; developed
       in a separate experiment, removed 2026-10-29). Also a problem of the DATA: some quotes are

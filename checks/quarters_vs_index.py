@@ -42,7 +42,7 @@ What this file is for:
     the thesis (the T-bills alone, a check of the set-aside tab:results-base and
     tab:p15, the best quarters, how often p15 is ahead, the index without
     dividends, the mean of the index's full years). That code is in commit
-    cf6519a (tag thesis-v4).
+    cf6519a (tag thesis-2026-11-03-unused-code-removed).
 
     How the "in the thesis" column works: a table row is "yes" when its cells,
     in the order printed, stand in the .tex (the label of the row is not

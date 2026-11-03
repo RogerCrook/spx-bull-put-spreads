@@ -21,7 +21,7 @@ HOW TO RUN IT
     python Code/s08_atm_vol.py
 
 CHANGED 2026-10-27 (review_log.md C3 and C15; the version before is the one
-in commit 4aca3ae, tag thesis-v1):
+in commit 4aca3ae, tag thesis-2026-10-27):
   - each month's result is first saved on its own in PARTS_FOLDER. A month
     already saved there is not done again, and a month that fails is reported
     and the run carries on. So the run can be stopped and started again, and a

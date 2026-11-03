@@ -34,7 +34,7 @@ thesis with T100: `check_atm_bias.py` (the simulated bias of the ATM fit) and
 `quarters_vs_index.py` and `entry_delta_backtest.py` lost the parts behind numbers
 no longer in the thesis (the tables set aside in
 `Masterarbeit_Tex_file/set_aside_ch4.tex`, the T-bill column, figures printed only
-for information). All of it is in commit `cf6519a` (tag `thesis-v4`).
+for information). All of it is in commit `cf6519a` (tag `thesis-2026-11-03-unused-code-removed`).
 
 Without the thesis `.tex` (not in the code repository), `chapter4_numbers.py` still
 computes every number but marks the "in the thesis" column with "?".
