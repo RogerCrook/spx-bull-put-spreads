@@ -3,7 +3,7 @@ CHAPTER 4: the quarterly return of the strategy against the S&P 500 with
 dividends (review_log T69)
 
 What this file is for:
-    Sections 4.2 (sec:results-main) and 4.4 (sec:robustness) compare, quarter by
+    Sections sec:results-main and sec:robustness compare, quarter by
     quarter, the return of the strategy with the return of the S&P 500 including
     dividends (the total return index ^SP500TR). This file computes every number
     of that comparison and prints it the way the .tex writes it, next to "yes" if
@@ -23,16 +23,28 @@ What this file is for:
     The last quarter, 2026 Q3, runs only to 14 August 2026, like the backtest.
 
     The runs are the four the thesis reports (results/, made 2026-10-28):
-      base_mid, base_cross   the base case at mid and crossing the spread (4.2)
-      p15_mid, p15_cross     the profit exit at Delta_0 - 0.15 (4.4)
+      base_mid, base_cross   the base case at mid and crossing the spread (sec:results-main)
+      p15_mid, p15_cross     the profit exit at Delta_0 - 0.15 (sec:robustness)
 
     First the file recomputes three rows of tab:results-base and tab:p15
     (negative quarters, median quarter, worst quarter), to show that its quarters
     are the same as those of checks/chapter4_numbers.py. Then it prints:
       A  the return of every quarter (one line per quarter, for the long tables)
-      B  statistics of the quarterly returns, base case and index (4.2)
-      C  the same for the four runs, and how often Delta_0 - 0.15 is ahead (4.4)
+      B  statistics of the quarterly returns, base case and index (sec:results-main)
+      C  the same for the four runs, and how often Delta_0 - 0.15 is ahead (sec:robustness)
       D  for information, not planned for the thesis: the index without dividends
+      E  the return of every calendar year, and the whole sample per year
+         (added 2026-10-30, review_log T78, for the annual tables)
+
+    The return of a year is made like that of a quarter: the strategy's P&L of
+    the year / average margin held in it (not annualised, so 2026 is the return to
+    14 August, as in tab:results-years), the index's close on the last trading
+    day of the year / close on the last trading day of the year before - 1. The
+    whole sample per year is, for the strategy, total P&L / average margin /
+    number of years (a year = 252 trading days), as in checks/chapter4_numbers.py
+    (function per_year), which is not compounded. For the index the file prints
+    the compounded return per year over the same trading days, and, for
+    information, the mean of the 14 full years.
 
     How the "in the thesis" column works: a table row is "yes" when its cells,
     in the order printed, stand in the .tex (the label of the row is not
@@ -279,14 +291,14 @@ print()
 
 print("=" * 100)
 print("A  RETURN OF EVERY QUARTER, per cent (2026 Q3 to 14 August)")
-print("   4.2  tab:quarters-base: S&P 500 with dividends & base mid & base cross")
-print("   4.4  tab:quarters-p15:  S&P 500 with dividends & base cross & Delta_0 - 0.15 cross")
+print("   sec:results-main  tab:quarters-base: S&P 500 with dividends & base mid & base cross")
+print("   sec:robustness    tab:quarters-p15:  S&P 500 with dividends & base cross & Delta_0 - 0.15 cross")
 print("=" * 100)
-print("  4.2")
+print("  sec:results-main")
 for i in range(len(quarters)):
     label = quarters[i].replace("-", " ")    # "2012-Q1" -> "2012 Q1"
     show(label, [per_cent(x_index[i]), per_cent(x_run["base_mid"][i]), per_cent(x_run["base_cross"][i])])
-print("  4.4")
+print("  sec:robustness")
 for i in range(len(quarters)):
     label = quarters[i].replace("-", " ")
     show(label, [per_cent(x_index[i]), per_cent(x_run["base_cross"][i]), per_cent(x_run["p15_cross"][i])])
@@ -398,13 +410,13 @@ def worst_index_quarters(columns, how_many):
         show("  " + quarters[i].replace("-", " "), cells)
 
 
-# ---- 8. B: section 4.2 ---------------------------------------------------------------------------
+# ---- 8. B: sec:results-main ----------------------------------------------------------------------
 
 columns_42 = [("index", x_index), ("T-bills", x_tbills),
               ("base_mid", x_run["base_mid"]), ("base_cross", x_run["base_cross"])]
 
 print("=" * 100)
-print("B  4.2  tab:quarters-index: columns S&P 500 with dividends & T-bills & base mid & base cross")
+print("B  sec:results-main  tab:quarters-index: columns S&P 500 with dividends & T-bills & base mid & base cross")
 print("=" * 100)
 statistics_rows(columns_42)
 print("  The five worst quarters of the index:")
@@ -412,14 +424,14 @@ worst_index_quarters(columns_42, 5)
 print()
 
 
-# ---- 9. C: section 4.4 ---------------------------------------------------------------------------
+# ---- 9. C: sec:robustness ------------------------------------------------------------------------
 
 columns_44 = [("index", x_index),
               ("base_mid", x_run["base_mid"]), ("p15_mid", x_run["p15_mid"]),
               ("base_cross", x_run["base_cross"]), ("p15_cross", x_run["p15_cross"])]
 
 print("=" * 100)
-print("C  4.4  tab:p15-quarters: columns S&P 500 with dividends & base mid & p15 mid & base cross & p15 cross")
+print("C  sec:robustness  tab:p15-quarters: columns S&P 500 with dividends & base mid & p15 mid & base cross & p15 cross")
 print("=" * 100)
 statistics_rows(columns_44)
 print("  The five worst quarters of the index:")
@@ -470,3 +482,128 @@ print("  mean quarter with dividends %.2f%%, without %.2f%%, difference %.2f%% (
     100 * min(dividend_part), 100 * max(dividend_part)))
 print("  mean T-bill quarter %.2f%% (smallest %.2f%%, largest %.2f%%)" % (
     100 * mean(x_tbills), 100 * min(x_tbills), 100 * max(x_tbills)))
+print()
+
+
+# ---- 11. E: the return of every calendar year (review_log T78) -------------------------------------
+
+def year_of(date_text):
+    """The year of a date: "2012-02-15" -> "2012"."""
+    return date_text[:4]                     # [:4]: the first four characters
+
+
+# the strategy: the same steps as for the quarters in part 3, with the year in
+# place of the quarter
+strategy_year = {}                           # run -> {year: return}
+tbills_year = {}                             # year -> T-bill interest / average margin (base case at mid)
+whole_sample = {}                            # run -> return per year over the whole sample
+tbills_whole = 0.0                           # the same for the T-bill interest alone (base case at mid)
+years = []                                   # the years in order: "2012", ..., "2026"
+backtest_days = 0                            # number of trading days in the backtest
+
+for run in RUNS:
+    equity = pd.read_csv(RESULTS + "equity_" + run + ".csv")
+    dates = list(equity["date"])
+    pnl_day = list(equity["pnl_day"])
+    margin = list(equity["margin"])
+    interest = list(equity["interest_today"])
+
+    pnl_sum = {}
+    margin_sum = {}
+    interest_sum = {}
+    days = {}
+    for i in range(len(dates)):
+        y = year_of(dates[i])
+        if y not in pnl_sum:                 # the first day of a new year: start at zero
+            pnl_sum[y] = 0.0
+            margin_sum[y] = 0.0
+            interest_sum[y] = 0.0
+            days[y] = 0
+        pnl_sum[y] = pnl_sum[y] + pnl_day[i]
+        margin_sum[y] = margin_sum[y] + margin[i]
+        interest_sum[y] = interest_sum[y] + interest[i]
+        days[y] = days[y] + 1
+
+    strategy_year[run] = {}
+    for y in pnl_sum:
+        average_margin = margin_sum[y] / days[y]
+        strategy_year[run][y] = pnl_sum[y] / average_margin
+        if run == "base_mid":
+            tbills_year[y] = interest_sum[y] / average_margin
+
+    # the whole sample: total P&L / average margin of all days / number of years
+    number_of_years = len(dates) / 252.0
+    average_margin_all = sum(margin) / len(margin)
+    whole_sample[run] = sum(pnl_day) / average_margin_all / number_of_years
+    if run == "base_mid":
+        tbills_whole = sum(interest) / average_margin_all / number_of_years
+        years = list(pnl_sum.keys())
+        backtest_days = len(dates)
+
+# the index: the close of the last trading day of every year in the file
+# (it starts in December 2011, so 2011 is there as the starting point)
+last_tr_year = {}
+index_years = []                             # "2011", "2012", ...
+for i in range(len(index_dates)):
+    y = year_of(index_dates[i])
+    if y not in last_tr_year:
+        index_years.append(y)
+    last_tr_year[y] = tr_close[i]            # overwritten day by day, so the last day of the year stays
+index_year = {}                              # year -> return with dividends
+for k in range(1, len(index_years)):
+    index_year[index_years[k]] = last_tr_year[index_years[k]] / last_tr_year[index_years[k - 1]] - 1
+
+# the index over the whole sample: from the close of 30 December 2011 to the close
+# of 14 August 2026, compounded per year over the backtest's trading days
+growth = last_tr_year[index_years[-1]] / last_tr_year[index_years[0]]
+index_whole = growth ** (252.0 / backtest_days) - 1     # ** : to the power of
+full_years = []                              # the 14 full years 2012-2025, for the mean
+for y in years:
+    if y != "2026":
+        full_years.append(index_year[y])
+
+print("=" * 100)
+print("E  RETURN OF EVERY CALENDAR YEAR, per cent (2026 to 14 August, not annualised)")
+print("   sec:results-main  annual table: S&P 500 with dividends & T-bills & base mid & base cross")
+print("   sec:robustness    annual table: S&P 500 with dividends & base mid & p15 mid & base cross & p15 cross")
+print("=" * 100)
+
+# check: rounded to whole per cent, mid & cross must be the cells of tab:results-years
+print("  CHECK against tab:results-years (base mid & base cross, whole per cent):")
+for y in years:
+    show(y, ["$%d$" % round(100 * strategy_year["base_mid"][y]),
+             "$%d$" % round(100 * strategy_year["base_cross"][y])])
+
+print("  sec:results-main")
+for y in years:
+    show(y, [per_cent(index_year[y]), per_cent(tbills_year[y]),
+             per_cent(strategy_year["base_mid"][y]), per_cent(strategy_year["base_cross"][y])])
+show("2012-2026, per year", [per_cent(index_whole), per_cent(tbills_whole),
+                             per_cent(whole_sample["base_mid"]), per_cent(whole_sample["base_cross"])])
+print("  sec:robustness")
+for y in years:
+    show(y, [per_cent(index_year[y]),
+             per_cent(strategy_year["base_mid"][y]), per_cent(strategy_year["p15_mid"][y]),
+             per_cent(strategy_year["base_cross"][y]), per_cent(strategy_year["p15_cross"][y])])
+show("2012-2026, per year", [per_cent(index_whole),
+                             per_cent(whole_sample["base_mid"]), per_cent(whole_sample["p15_mid"]),
+                             per_cent(whole_sample["base_cross"]), per_cent(whole_sample["p15_cross"])])
+print("  (the index's 2012-2026 figure is compounded, the strategy's is not; for information,")
+print("   the mean of the index's 14 full years 2012-2025 is %.1f%%)" % (100 * mean(full_years)))
+
+# negative years and the worst year, for the rows added to tab:quarters-index and tab:p15-quarters
+print("  Negative years and worst year (2026 counted as a year):")
+year_columns = [("index", index_year), ("T-bills", tbills_year)]
+for run in RUNS:
+    year_columns.append((run, strategy_year[run]))
+for name, returns in year_columns:
+    negative = []
+    worst_year = years[0]
+    for y in years:
+        if returns[y] < 0:
+            negative.append(y)
+        if returns[y] < returns[worst_year]:
+            worst_year = y
+    print("  %-11s negative years %s (of %d) %s   worst %s %s" % (
+        name, "$%d$" % len(negative), len(years), negative,
+        worst_year, per_cent_sign(returns[worst_year])))

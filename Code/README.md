@@ -21,6 +21,7 @@ data paths (`Data/...`) are relative to it, and outputs are written there.
 | `s11_backtest.py` | `backtest.py` | the backtest (imported by `s12`) |
 | `s12_run_variants.py` | `run_variants.py` | runs the backtest variants |
 | `s13_figure_smile.py` | `figure_smile.py` | Figure `fig:smile` |
+| `s14_figures_results.py` | (new 2026-10-30) | Figure `fig:returns-years` (reads `results/` and `Data/09_total_return/`, review_log T78; the two quarterly scatter plots it also drew were removed with T79) |
 
 **Removed 2026-10-29 (Arian):** `s02_check_coverage.py` (counted the trading days in
 `Data/02_clean`; no thesis number came from it) and `s10_entry_delta.py` (the daily
