@@ -1,6 +1,5 @@
 """
-STAGE 1 - clean all the raw CSV files and save them, one file per month.
-(As CSV: see FILE_FORMAT below. Parquet is possible but was not used.)
+STAGE 1 - clean all the raw CSV files and save them, one CSV file per month.
 
 It began as a notebook (stage1_simple.ipynb, not kept in this folder). The
 function clean_one_file() below does what its cells 4 to 16 did, and the
@@ -58,10 +57,6 @@ MIN_BID = 0.025                 # notebook cell 14
 # the official daily close of the S&P 500 (Yahoo, symbol ^GSPC, one row per day,
 # made by checks/fetch_gspc.py). Used as S at the snapshot after the stock close.
 INDEX_CLOSE_FILE = "Data/07_index_close/GSPC_daily.csv"
-
-# Output format: "csv" is easy to open in Excel, "parquet" is ~11x smaller,
-# ~6x faster to read, and remembers that dates are dates.
-FILE_FORMAT = "csv"
 
 
 # ----------------------------------------------------------------------
@@ -215,7 +210,7 @@ def main():
 
     # now process one month at a time
     for month in sorted(months):
-        out_path = os.path.join(OUT_FOLDER, "spx_" + month + "." + FILE_FORMAT)
+        out_path = os.path.join(OUT_FOLDER, "spx_" + month + ".csv")
 
         if os.path.exists(out_path):             # already done on an earlier run
             print(month, "already done, skipping")
@@ -248,10 +243,7 @@ def main():
         # the program is stopped while writing, only the ".part" file is
         # incomplete, and the month is done again on the next run.
         part_path = out_path + ".part"
-        if FILE_FORMAT == "csv":                 # save in whichever format was chosen
-            table.to_csv(part_path, index=False)
-        else:
-            table.to_parquet(part_path, index=False)
+        table.to_csv(part_path, index=False)
         os.replace(part_path, out_path)          # rename: the month file only appears once complete
 
         size_mb = os.path.getsize(out_path) / 1e6

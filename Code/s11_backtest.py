@@ -815,14 +815,12 @@ def read_month(month):
 
 def end_of_day_times(greeks):
     """
-    For every day of one month: the time of the snapshot at the stock close,
-    and the time of the snapshot after it.
+    For every day of one month: the time of the snapshot at the stock close.
 
-    Normal days end at 16:15, so the close is 16:00 and the one after it 16:15.
-    Early-close days (e.g. the day after Thanksgiving) end at 13:15, so the
-    close is 13:00 and the one after it 13:15.
+    Normal days end at 16:15, so the close is 16:00. Early-close days (e.g. the
+    day after Thanksgiving) end at 13:15, so the close is 13:00.
 
-    Returns a dictionary: date -> (close time, after-close time), as text.
+    Returns a dictionary: date -> close time, as text.
     """
 
     # the last snapshot of each day. The times are sorted (oldest first), so
@@ -836,9 +834,9 @@ def end_of_day_times(greeks):
     times = {}
     for date in last_time:
         if last_time[date] == "13:15:00":      # an early-close day
-            times[date] = ("13:00:00", "13:15:00")
+            times[date] = "13:00:00"
         else:                                  # a normal day
-            times[date] = ("16:00:00", "16:15:00")
+            times[date] = "16:00:00"
 
     return times
 
@@ -905,7 +903,7 @@ def main():
 
         greeks = read_month(month)
 
-        # for every day of this month: the close time and the time after it
+        # for every day of this month: the time of the stock close
         day_times = end_of_day_times(greeks)
 
         # this month's rows of the ATM table
@@ -945,10 +943,8 @@ def main():
 
             time_now = when[11:]               # the time part, e.g. "16:00:00"
 
-            # the two special times of today, e.g. ("16:00:00", "16:15:00").
-            # Only the first is used here (the second was needed for the C8
-            # correction, which is now done in the data)
-            close_time, after_close_time = day_times[today]
+            # the time of today's stock close, e.g. "16:00:00"
+            close_time = day_times[today]
 
             # C9: at the stock close no decision is taken. "continue" jumps
             # straight to the next snapshot: no exit test, no new position.

@@ -18,7 +18,8 @@ What each one means:
 
     GAMMA  how much DELTA moves when the index moves 1 point.
            High gamma means your delta changes fast, which is the risk
-           your 15-day rule is there to control.
+           the gamma exit (at max(half the time to expiry, 10 days)) is there
+           to control.
 
     VEGA   how much the option price moves when volatility rises 1 point.
            In a crash, most of your loss is vega, not delta.
@@ -57,8 +58,6 @@ def all_greeks(F, K, tau, sigma, D, is_call, S):
     v = np.where(v < 0.000000000001, 0.000000000001, v)
 
     d1 = (np.log(F / K) + 0.5 * v * v) / v
-
-    d2 = d1 - v
 
     # the bell curve height at d1, which several greeks need
     # (the normal density phi(d1) = exp(-d1^2 / 2) / sqrt(2 pi); np.pi is 3.14159...)

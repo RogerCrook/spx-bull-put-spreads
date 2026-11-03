@@ -24,7 +24,6 @@ Read-only: writes nothing. Takes about a minute.
 Run it from the main folder:   python checks/check_forward_error.py
 """
 
-import numpy as np                           # numpy does maths on lists of numbers
 import pandas as pd                          # pandas works with tables
 
 

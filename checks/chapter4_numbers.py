@@ -110,27 +110,6 @@ def load(name):
     trades = pd.read_csv(RESULTS + "trades_" + name + ".csv")
     equity = pd.read_csv(RESULTS + "equity_" + name + ".csv")
 
-    # The first base-case run (of 2026-10-08, since removed) was written
-    # before the equity file had the columns pnl_day, year and quarter, so they
-    # are made here when missing. (The runs read now all have them; this is
-    # kept for reading older runs.)
-    if "pnl_day" not in equity:
-        # the P&L of each day = today's total minus yesterday's total;
-        # .diff() does exactly that, and gives nothing (NaN) on the first day,
-        # where the day's P&L is simply the total so far
-        equity["pnl_day"] = equity["total_pnl"].diff()
-        equity.loc[0, "pnl_day"] = equity.loc[0, "total_pnl"]
-
-    if "year" not in equity:
-        # .str[:4] cuts the first 4 characters of every date: "2012-01-03" -> "2012";
-        # .astype(int) turns that text into a whole number
-        equity["year"] = equity["date"].str[:4].astype(int)
-
-    if "quarter" not in equity:
-        # the quarter, e.g. "2012-Q1"; .dt.quarter gives 1 to 4 for a real date
-        quarter_number = pd.to_datetime(equity["date"]).dt.quarter.astype(str)
-        equity["quarter"] = equity["date"].str[:4] + "-Q" + quarter_number
-
     equity["month"] = equity["date"].str[:7]          # "2012-01-03" -> "2012-01"
 
     # the length of each cycle in days: exit time minus entry time is a time
