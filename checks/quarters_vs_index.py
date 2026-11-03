@@ -1,50 +1,48 @@
 """
-CHAPTER 4: the quarterly return of the strategy against the S&P 500 with
-dividends (review_log T69)
+CHAPTER 4: the quarterly and annual returns of the strategy against the S&P 500
+with dividends (review_log T69, T78)
 
 What this file is for:
-    Sections sec:results-main and sec:robustness compare, quarter by
-    quarter, the return of the strategy with the return of the S&P 500 including
-    dividends (the total return index ^SP500TR). This file computes every number
-    of that comparison and prints it the way the .tex writes it, next to "yes" if
-    it stands in the thesis.
+    Sections sec:results-main and sec:robustness compare, quarter by quarter and
+    year by year, the return of the strategy with the return of the S&P 500
+    including dividends (the total return index ^SP500TR). This file computes
+    every number of their tables and prints it the way the .tex writes it, next
+    to "yes" if it stands in the thesis.
 
     The two returns of a quarter:
-      strategy   P&L of the quarter / average margin held in it, exactly as in
-                 checks/chapter4_numbers.py (function periods): the P&L includes
-                 the Treasury-bill interest and the change in value of the
-                 position still open at the end of the quarter
+      strategy   P&L of the quarter / average margin held in it: the P&L
+                 includes the Treasury-bill interest and the change in value of
+                 the position still open at the end of the quarter
       index      close of the total return index on the last trading day of the
                  quarter / close on the last trading day of the quarter before - 1
                  (for the first quarter of 2012 the close of 30 December 2011)
-    and, as a third reference, the Treasury bills alone:
-      T-bills    interest of the quarter / average margin, from the base case at mid
-                 (the interest the margin earns, without any option trade)
     The last quarter, 2026 Q3, runs only to 14 August 2026, like the backtest.
 
     The runs are the four the thesis reports (results/, made 2026-10-28):
       base_mid, base_cross   the base case at mid and crossing the spread (sec:results-main)
       p15_mid, p15_cross     the profit exit at Delta_0 - 0.15 (sec:robustness)
 
-    First the file recomputes three rows of tab:results-base and tab:p15
-    (negative quarters, median quarter, worst quarter), to show that its quarters
-    are the same as those of checks/chapter4_numbers.py. Then it prints:
-      A  the return of every quarter (one line per quarter, for the long tables)
-      B  statistics of the quarterly returns, base case and index (sec:results-main)
-      C  the same for the four runs, and how often Delta_0 - 0.15 is ahead (sec:robustness)
-      D  for information, not planned for the thesis: the index without dividends
-      E  the return of every calendar year, and the whole sample per year
-         (added 2026-10-30, review_log T78, for the annual tables)
+    It prints:
+      A  the return of every quarter (tab:quarters-base, tab:quarters-p15)
+      B  statistics of the quarterly returns, base case and index (tab:quarters-index)
+      C  the same for the four runs (tab:p15-quarters)
+      E  the return of every calendar year, the whole sample per year
+         (tab:results-years, tab:p15-years), and the negative and worst years
+         (tab:p15-quarters)
 
     The return of a year is made like that of a quarter: the strategy's P&L of
     the year / average margin held in it (not annualised, so 2026 is the return to
-    14 August, as in tab:results-years), the index's close on the last trading
-    day of the year / close on the last trading day of the year before - 1. The
-    whole sample per year is, for the strategy, total P&L / average margin /
-    number of years (a year = 252 trading days), as in checks/chapter4_numbers.py
-    (function per_year), which is not compounded. For the index the file prints
-    the compounded return per year over the same trading days, and, for
-    information, the mean of the 14 full years.
+    14 August), the index's close on the last trading day of the year / close on
+    the last trading day of the year before - 1. The whole sample per year is, for
+    the strategy, total P&L / average margin / number of years (a year = 252
+    trading days), which is not compounded. For the index it is the compounded
+    return per year over the same trading days.
+
+    Until 2026-11-03 (review_log T112) the file also printed figures no longer in
+    the thesis (the T-bills alone, a check of the set-aside tab:results-base and
+    tab:p15, the best quarters, how often p15 is ahead, the index without
+    dividends, the mean of the index's full years). That code is in commit
+    cf6519a (tag thesis-v4).
 
     How the "in the thesis" column works: a table row is "yes" when its cells,
     in the order printed, stand in the .tex (the label of the row is not
@@ -105,13 +103,18 @@ def quarter_of(date_text):
     return year + "-Q" + str((month - 1) // 3 + 1)   # // divides and drops the remainder: months 1-3 -> 1, 4-6 -> 2, ...
 
 
+def year_of(date_text):
+    """The year of a date: "2012-02-15" -> "2012"."""
+    return date_text[:4]                     # [:4]: the first four characters
+
+
 def per_cent(x):
     """A share as a per cent figure with one decimal, as the .tex writes it in a table cell: 0.141 -> "$14.1$"."""
     return "$%.1f$" % (100 * x)
 
 
 def per_cent_sign(x):
-    """The same with a per cent sign, as in tab:results-base: 0.141 -> "$14.1\\%$"."""
+    """The same with a per cent sign, as in tab:quarters-index: 0.141 -> "$14.1\\%$"."""
     return "$%.1f\\%%$" % (100 * x)
 
 
@@ -162,83 +165,103 @@ def show(label, cells):
     print("  %-4s %-46s %s" % (in_thesis(row), label, row))
 
 
-# ---- 3. the strategy: return of each quarter, for each run ----------------------------------
+# ---- 3. the strategy: return of each quarter and each year, for each run --------------------
 
 strategy = {}                                # run -> {quarter: return}
-tbills = {}                                  # quarter -> T-bill interest / average margin (base case at mid)
+strategy_year = {}                           # run -> {year: return}
+whole_sample = {}                            # run -> return per year over the whole sample
 last_day = {}                                # quarter -> last day of the quarter in the equity file
 quarters = []                                # the quarters in date order: "2012-Q1", ..., "2026-Q3"
+years = []                                   # the years in order: "2012", ..., "2026"
+backtest_days = 0                            # number of trading days in the backtest
+
+
+def returns_by(dates, pnl_day, margin, label_of):
+    """
+    The return of every period (quarter or year, named by the function label_of):
+    the P&L of the period / the average margin held in it. Returns a dict
+    {period: return}, in date order.
+    """
+    # add up, period by period, the P&L and the margin, and count the days
+    pnl_sum = {}
+    margin_sum = {}
+    days = {}
+    for i in range(len(dates)):
+        period = label_of(dates[i])
+        if period not in pnl_sum:            # the first day of a new period: start at zero
+            pnl_sum[period] = 0.0
+            margin_sum[period] = 0.0
+            days[period] = 0
+        pnl_sum[period] = pnl_sum[period] + pnl_day[i]
+        margin_sum[period] = margin_sum[period] + margin[i]
+        days[period] = days[period] + 1
+
+    # return of a period = its P&L / its average margin (average = sum / number of days)
+    returns = {}
+    for period in pnl_sum:
+        returns[period] = pnl_sum[period] / (margin_sum[period] / days[period])
+    return returns
+
 
 for run in RUNS:
     equity = pd.read_csv(RESULTS + "equity_" + run + ".csv")
 
-    # the columns as plain Python lists, so that the loop below can go through
-    # them with simple positions 0, 1, 2, ...
+    # the columns as plain Python lists, so that the loops can go through them
+    # with simple positions 0, 1, 2, ...
     dates = list(equity["date"])
     pnl_day = list(equity["pnl_day"])        # the P&L of each day, interest included
     margin = list(equity["margin"])          # the margin held at the end of each day
-    interest = list(equity["interest_today"])   # the T-bill interest of each day
 
-    # add up, quarter by quarter, the P&L, the margin and the interest, and count the days
-    pnl_sum = {}
-    margin_sum = {}
-    interest_sum = {}
-    days = {}
     for i in range(len(dates)):
-        q = quarter_of(dates[i])
-        if q != equity["quarter"][i]:        # the file's own quarter column must agree
-            print("quarter mismatch on", dates[i], q, equity["quarter"][i])
-        if q not in pnl_sum:                 # the first day of a new quarter: start at zero
-            pnl_sum[q] = 0.0
-            margin_sum[q] = 0.0
-            interest_sum[q] = 0.0
-            days[q] = 0
-        pnl_sum[q] = pnl_sum[q] + pnl_day[i]
-        margin_sum[q] = margin_sum[q] + margin[i]
-        interest_sum[q] = interest_sum[q] + interest[i]
-        days[q] = days[q] + 1
-        last_day[q] = dates[i]               # the rows are in date order, so the last one seen is the last day
+        if quarter_of(dates[i]) != equity["quarter"][i]:     # the file's own quarter column must agree
+            print("quarter mismatch on", dates[i], quarter_of(dates[i]), equity["quarter"][i])
+        last_day[quarter_of(dates[i])] = dates[i]   # the rows are in date order, so the last one seen is the last day
 
-    # return of a quarter = its P&L / its average margin (average = sum / number of days)
-    strategy[run] = {}
-    for q in pnl_sum:
-        average_margin = margin_sum[q] / days[q]
-        strategy[run][q] = pnl_sum[q] / average_margin
-        if run == "base_mid":
-            tbills[q] = interest_sum[q] / average_margin
+    strategy[run] = returns_by(dates, pnl_day, margin, quarter_of)
+    strategy_year[run] = returns_by(dates, pnl_day, margin, year_of)
+
+    # the whole sample: total P&L / average margin of all days / number of years
+    number_of_years = len(dates) / 252.0
+    whole_sample[run] = sum(pnl_day) / (sum(margin) / len(margin)) / number_of_years
 
     if run == "base_mid":
-        quarters = list(pnl_sum.keys())      # a dict keeps the order in which its keys were added
+        quarters = list(strategy[run].keys())       # a dict keeps the order in which its keys were added
+        years = list(strategy_year[run].keys())
+        backtest_days = len(dates)
 
 
-# ---- 4. the index: return of each quarter ------------------------------------------------------
+# ---- 4. the index: return of each quarter and each year --------------------------------------
 
 index = pd.read_csv(INDEX_FILE)
 index_dates = list(index["Date"])
 tr_close = list(index["tr_close"])           # with dividends reinvested
-price_close = list(index["price_close"])     # the price index, without dividends
 
-# the close and the date of the last trading day of every quarter in the file
-# (it starts in December 2011, so 2011-Q4 is there as the starting point)
-last_tr = {}
-last_price = {}
-index_last_day = {}
-index_quarters = []                          # in date order: "2011-Q4", "2012-Q1", ...
-for i in range(len(index_dates)):
-    q = quarter_of(index_dates[i])
-    if q not in last_tr:
-        index_quarters.append(q)
-    last_tr[q] = tr_close[i]                 # overwritten day by day, so the last day of the quarter stays
-    last_price[q] = price_close[i]
-    index_last_day[q] = index_dates[i]
 
-index_tr = {}                                # quarter -> return with dividends
-index_price = {}                             # quarter -> return without dividends
-for k in range(1, len(index_quarters)):      # from the second quarter on: each needs the one before
-    q = index_quarters[k]
-    before = index_quarters[k - 1]
-    index_tr[q] = last_tr[q] / last_tr[before] - 1
-    index_price[q] = last_price[q] / last_price[before] - 1
+def index_returns_by(label_of):
+    """
+    The return of the index in every period (quarter or year, named by the
+    function label_of): close on its last trading day / close on the last
+    trading day of the period before - 1. Also gives back the last trading day
+    of every period. The file starts in December 2011, so 2011 (2011-Q4) is
+    there as the starting point and has no return of its own.
+    """
+    last_close = {}
+    last_date = {}
+    periods = []                             # in date order
+    for i in range(len(index_dates)):
+        period = label_of(index_dates[i])
+        if period not in last_close:
+            periods.append(period)
+        last_close[period] = tr_close[i]     # overwritten day by day, so the last day of the period stays
+        last_date[period] = index_dates[i]
+    returns = {}
+    for k in range(1, len(periods)):         # from the second period on: each needs the one before
+        returns[periods[k]] = last_close[periods[k]] / last_close[periods[k - 1]] - 1
+    return returns, last_date, last_close, periods
+
+
+index_tr, index_last_day, _, index_quarters = index_returns_by(quarter_of)
+index_year, _, last_tr_year, index_years = index_returns_by(year_of)
 
 # both must end each quarter on the same day (the same trading calendar)
 different_end = []
@@ -252,14 +275,16 @@ print("Quarters in which the index file and the backtest end on different days:"
 print("Start of the first quarter of the index: close of", index_last_day[index_quarters[0]])
 print()
 
+# the index over the whole sample: from the close of 30 December 2011 to the close
+# of 14 August 2026, compounded per year over the backtest's trading days
+growth = last_tr_year[index_years[-1]] / last_tr_year[index_years[0]]
+index_whole = growth ** (252.0 / backtest_days) - 1     # ** : to the power of
+
 
 # lists in quarter order, used by every statistic below
 x_index = []
 for q in quarters:
     x_index.append(index_tr[q])
-x_tbills = []
-for q in quarters:
-    x_tbills.append(tbills[q])
 x_run = {}
 for run in RUNS:
     x_run[run] = []
@@ -267,27 +292,7 @@ for run in RUNS:
         x_run[run].append(strategy[run][q])
 
 
-# ---- 5. the same quarters as checks/chapter4_numbers.py ----------------------------------------
-
-print("=" * 100)
-print("CHECK: rows of tab:results-base and tab:p15 recomputed from these quarters")
-print("=" * 100)
-for run in RUNS:
-    returns = x_run[run]
-    negative = 0
-    for r in returns:
-        if r < 0:
-            negative = negative + 1
-    worst = min(returns)
-    print("  %-11s negative quarters %s (%s)   median %s (%s)   worst %s (%s)" % (
-        run, "$%d$" % negative, in_thesis("$%d$" % negative),
-        per_cent_sign(median(returns)), in_thesis(per_cent_sign(median(returns))),
-        per_cent_sign(worst), in_thesis(per_cent_sign(worst))))
-print("  (the medians of p15 are not in tab:p15, but they are in tab:p15-quarters)")
-print()
-
-
-# ---- 6. A: the return of every quarter ----------------------------------------------------------
+# ---- 5. A: the return of every quarter ----------------------------------------------------------
 
 print("=" * 100)
 print("A  RETURN OF EVERY QUARTER, per cent (2026 Q3 to 14 August)")
@@ -305,79 +310,34 @@ for i in range(len(quarters)):
 print()
 
 
-# ---- 7. the statistics of one list of quarterly returns ----------------------------------------
-
-def statistics(returns):
-    """Mean, median, standard deviation, best and worst quarter, number of negative quarters."""
-    best = max(returns)
-    worst = min(returns)
-    negative = 0
-    for r in returns:
-        if r < 0:
-            negative = negative + 1
-    return {"mean": mean(returns), "median": median(returns),
-            "sd": standard_deviation(returns),
-            "best": best, "best quarter": quarters[returns.index(best)],      # .index(v): the position of v in the list
-            "worst": worst, "worst quarter": quarters[returns.index(worst)],
-            "negative": negative}
-
-
-def by_index_direction(returns):
-    """
-    The mean return in the quarters in which the index fell, and in those in which
-    it rose, and how many of each (a quarter with an index return of exactly zero
-    would count as "rose").
-    """
-    down = []
-    up = []
-    for i in range(len(quarters)):
-        if x_index[i] < 0:
-            down.append(returns[i])
-        else:
-            up.append(returns[i])
-    return mean(down), len(down), mean(up), len(up)
-
-
-def cells(stats, key):
-    """One cell per column: the statistic `key` of each column, as a per cent figure."""
-    result = []
-    for s in stats:
-        result.append(per_cent_sign(s[key]))
-    return result
-
+# ---- 6. the statistics of a list of columns of quarterly returns ---------------------------------
 
 def statistics_rows(columns):
     """Print the statistics rows for a list of (name, returns) columns, one cell per column."""
-    stats = []
-    for name, returns in columns:
-        stats.append(statistics(returns))
-
-    show("Mean quarter", cells(stats, "mean"))
-    show("Median quarter", cells(stats, "median"))
-    show("Standard deviation", cells(stats, "sd"))
-    # best and worst quarter: printed for information, not in the thesis tables
-    # (the worst is 2020 Q1 for all but the T-bills, the first of the five worst
-    # quarters of the index printed below, and in tab:results-base already)
-    show("Best quarter", cells(stats, "best"))
-    best_quarters = []
-    worst_quarters = []
+    mean_cells = []
+    median_cells = []
+    sd_cells = []
     negative_cells = []
-    for s in stats:
-        best_quarters.append(s["best quarter"])
-        worst_quarters.append(s["worst quarter"])
-        negative_cells.append("$%d$" % s["negative"])
-    print("       its quarter:", best_quarters)
-    show("Worst quarter", cells(stats, "worst"))
-    print("       its quarter:", worst_quarters)
+    for name, returns in columns:
+        mean_cells.append(per_cent_sign(mean(returns)))
+        median_cells.append(per_cent_sign(median(returns)))
+        sd_cells.append(per_cent_sign(standard_deviation(returns)))
+        negative = 0
+        for r in returns:
+            if r < 0:
+                negative = negative + 1
+        negative_cells.append("$%d$" % negative)
+    show("Mean quarter", mean_cells)
+    show("Median quarter", median_cells)
+    show("Standard deviation", sd_cells)
     show("Negative quarters (of %d)" % len(quarters), negative_cells)
 
-    # correlation and slope against the index; "---" for the index itself, and
-    # for the T-bills, whose return hardly changes from quarter to quarter, so that
-    # a correlation with it means nothing (the thesis writes "---" there too)
+    # correlation and slope against the index; "---" for the index itself
+    # (the thesis writes "---" there too)
     correlation_cells = []
     slope_cells = []
     for name, returns in columns:
-        if name == "index" or name == "T-bills":
+        if name == "index":
             correlation_cells.append("---")
             slope_cells.append("---")
         else:
@@ -385,16 +345,25 @@ def statistics_rows(columns):
             correlation_cells.append("$%.2f$" % c)
             slope_cells.append("$%.2f$" % b)
     show("Correlation with the index", correlation_cells)
-    show("Slope against the index", slope_cells)
+    show("Least-squares slope against the index", slope_cells)
 
+    # the mean return in the quarters in which the index fell, and in those in
+    # which it rose (a quarter with an index return of exactly zero would count
+    # as "rose")
     down_cells = []
     up_cells = []
     for name, returns in columns:
-        mean_down, n_down, mean_up, n_up = by_index_direction(returns)
-        down_cells.append(per_cent_sign(mean_down))
-        up_cells.append(per_cent_sign(mean_up))
-    show("Mean in the %d quarters the index fell" % n_down, down_cells)
-    show("Mean in the %d quarters the index rose" % n_up, up_cells)
+        down = []
+        up = []
+        for i in range(len(quarters)):
+            if x_index[i] < 0:
+                down.append(returns[i])
+            else:
+                up.append(returns[i])
+        down_cells.append(per_cent_sign(mean(down)))
+        up_cells.append(per_cent_sign(mean(up)))
+    show("Mean in the %d quarters the index fell" % len(down), down_cells)
+    show("Mean in the %d quarters the index rose" % len(up), up_cells)
 
 
 def worst_index_quarters(columns, how_many):
@@ -410,175 +379,47 @@ def worst_index_quarters(columns, how_many):
         show("  " + quarters[i].replace("-", " "), cells)
 
 
-# ---- 8. B: sec:results-main ----------------------------------------------------------------------
+# ---- 7. B: sec:results-main ----------------------------------------------------------------------
 
-columns_42 = [("index", x_index), ("T-bills", x_tbills),
-              ("base_mid", x_run["base_mid"]), ("base_cross", x_run["base_cross"])]
+columns_base = [("index", x_index),
+                ("base_mid", x_run["base_mid"]), ("base_cross", x_run["base_cross"])]
 
 print("=" * 100)
-print("B  sec:results-main  tab:quarters-index: columns S&P 500 with dividends & T-bills & base mid & base cross")
+print("B  sec:results-main  tab:quarters-index: columns S&P 500 with dividends & base mid & base cross")
 print("=" * 100)
-statistics_rows(columns_42)
+statistics_rows(columns_base)
 print("  The five worst quarters of the index:")
-worst_index_quarters(columns_42, 5)
+worst_index_quarters(columns_base, 5)
 print()
 
 
-# ---- 9. C: sec:robustness ------------------------------------------------------------------------
+# ---- 8. C: sec:robustness ------------------------------------------------------------------------
 
-columns_44 = [("index", x_index),
-              ("base_mid", x_run["base_mid"]), ("p15_mid", x_run["p15_mid"]),
-              ("base_cross", x_run["base_cross"]), ("p15_cross", x_run["p15_cross"])]
+columns_p15 = [("index", x_index),
+               ("base_mid", x_run["base_mid"]), ("p15_mid", x_run["p15_mid"]),
+               ("base_cross", x_run["base_cross"]), ("p15_cross", x_run["p15_cross"])]
 
 print("=" * 100)
 print("C  sec:robustness  tab:p15-quarters: columns S&P 500 with dividends & base mid & p15 mid & base cross & p15 cross")
 print("=" * 100)
-statistics_rows(columns_44)
+statistics_rows(columns_p15)
 print("  The five worst quarters of the index:")
-worst_index_quarters(columns_44, 5)
-
-# how often Delta_0 - 0.15 does better than the base case, in all quarters and in
-# the quarters in which the index fell; and the mean difference in each group
-print("  Delta_0 - 0.15 against the base case:")
-for setting in ["mid", "cross"]:
-    base = x_run["base_" + setting]
-    p15 = x_run["p15_" + setting]
-    ahead = 0                                # quarters in which p15 is ahead
-    ahead_down = 0                           # of them, quarters in which the index fell
-    n_down = 0
-    differences_down = []
-    differences_up = []
-    for i in range(len(quarters)):
-        difference = p15[i] - base[i]
-        if difference > 0:
-            ahead = ahead + 1
-        if x_index[i] < 0:
-            n_down = n_down + 1
-            differences_down.append(difference)
-            if difference > 0:
-                ahead_down = ahead_down + 1
-        else:
-            differences_up.append(difference)
-    show("%-5s quarters ahead (of %d)" % (setting, len(quarters)), ["$%d$" % ahead])
-    show("%-5s ahead in the %d quarters the index fell" % (setting, n_down), ["$%d$" % ahead_down])
-    show("%-5s mean difference, index fell / rose (points)" % setting,
-         [per_cent(mean(differences_down)), per_cent(mean(differences_up))])
+worst_index_quarters(columns_p15, 5)
 print()
 
 
-# ---- 10. D: for information, the index without dividends -----------------------------------------
-
-print("=" * 100)
-print("D  For information (not planned for the thesis): the index without dividends")
-print("=" * 100)
-x_price = []
-for q in quarters:
-    x_price.append(index_price[q])
-dividend_part = []
-for i in range(len(quarters)):
-    dividend_part.append(x_index[i] - x_price[i])
-print("  mean quarter with dividends %.2f%%, without %.2f%%, difference %.2f%% (smallest %.2f%%, largest %.2f%%)" % (
-    100 * mean(x_index), 100 * mean(x_price), 100 * mean(dividend_part),
-    100 * min(dividend_part), 100 * max(dividend_part)))
-print("  mean T-bill quarter %.2f%% (smallest %.2f%%, largest %.2f%%)" % (
-    100 * mean(x_tbills), 100 * min(x_tbills), 100 * max(x_tbills)))
-print()
-
-
-# ---- 11. E: the return of every calendar year (review_log T78) -------------------------------------
-
-def year_of(date_text):
-    """The year of a date: "2012-02-15" -> "2012"."""
-    return date_text[:4]                     # [:4]: the first four characters
-
-
-# the strategy: the same steps as for the quarters in part 3, with the year in
-# place of the quarter
-strategy_year = {}                           # run -> {year: return}
-tbills_year = {}                             # year -> T-bill interest / average margin (base case at mid)
-whole_sample = {}                            # run -> return per year over the whole sample
-tbills_whole = 0.0                           # the same for the T-bill interest alone (base case at mid)
-years = []                                   # the years in order: "2012", ..., "2026"
-backtest_days = 0                            # number of trading days in the backtest
-
-for run in RUNS:
-    equity = pd.read_csv(RESULTS + "equity_" + run + ".csv")
-    dates = list(equity["date"])
-    pnl_day = list(equity["pnl_day"])
-    margin = list(equity["margin"])
-    interest = list(equity["interest_today"])
-
-    pnl_sum = {}
-    margin_sum = {}
-    interest_sum = {}
-    days = {}
-    for i in range(len(dates)):
-        y = year_of(dates[i])
-        if y not in pnl_sum:                 # the first day of a new year: start at zero
-            pnl_sum[y] = 0.0
-            margin_sum[y] = 0.0
-            interest_sum[y] = 0.0
-            days[y] = 0
-        pnl_sum[y] = pnl_sum[y] + pnl_day[i]
-        margin_sum[y] = margin_sum[y] + margin[i]
-        interest_sum[y] = interest_sum[y] + interest[i]
-        days[y] = days[y] + 1
-
-    strategy_year[run] = {}
-    for y in pnl_sum:
-        average_margin = margin_sum[y] / days[y]
-        strategy_year[run][y] = pnl_sum[y] / average_margin
-        if run == "base_mid":
-            tbills_year[y] = interest_sum[y] / average_margin
-
-    # the whole sample: total P&L / average margin of all days / number of years
-    number_of_years = len(dates) / 252.0
-    average_margin_all = sum(margin) / len(margin)
-    whole_sample[run] = sum(pnl_day) / average_margin_all / number_of_years
-    if run == "base_mid":
-        tbills_whole = sum(interest) / average_margin_all / number_of_years
-        years = list(pnl_sum.keys())
-        backtest_days = len(dates)
-
-# the index: the close of the last trading day of every year in the file
-# (it starts in December 2011, so 2011 is there as the starting point)
-last_tr_year = {}
-index_years = []                             # "2011", "2012", ...
-for i in range(len(index_dates)):
-    y = year_of(index_dates[i])
-    if y not in last_tr_year:
-        index_years.append(y)
-    last_tr_year[y] = tr_close[i]            # overwritten day by day, so the last day of the year stays
-index_year = {}                              # year -> return with dividends
-for k in range(1, len(index_years)):
-    index_year[index_years[k]] = last_tr_year[index_years[k]] / last_tr_year[index_years[k - 1]] - 1
-
-# the index over the whole sample: from the close of 30 December 2011 to the close
-# of 14 August 2026, compounded per year over the backtest's trading days
-growth = last_tr_year[index_years[-1]] / last_tr_year[index_years[0]]
-index_whole = growth ** (252.0 / backtest_days) - 1     # ** : to the power of
-full_years = []                              # the 14 full years 2012-2025, for the mean
-for y in years:
-    if y != "2026":
-        full_years.append(index_year[y])
+# ---- 9. E: the return of every calendar year (review_log T78) -------------------------------------
 
 print("=" * 100)
 print("E  RETURN OF EVERY CALENDAR YEAR, per cent (2026 to 14 August, not annualised)")
-print("   sec:results-main  annual table: S&P 500 with dividends & T-bills & base mid & base cross")
-print("   sec:robustness    annual table: S&P 500 with dividends & base mid & p15 mid & base cross & p15 cross")
+print("   sec:results-main  tab:results-years: S&P 500 with dividends & base mid & base cross")
+print("   sec:robustness    tab:p15-years: S&P 500 with dividends & base mid & p15 mid & base cross & p15 cross")
 print("=" * 100)
-
-# check: rounded to whole per cent, mid & cross must be the cells of tab:results-years
-print("  CHECK against tab:results-years (base mid & base cross, whole per cent):")
-for y in years:
-    show(y, ["$%d$" % round(100 * strategy_year["base_mid"][y]),
-             "$%d$" % round(100 * strategy_year["base_cross"][y])])
-
 print("  sec:results-main")
 for y in years:
-    show(y, [per_cent(index_year[y]), per_cent(tbills_year[y]),
+    show(y, [per_cent(index_year[y]),
              per_cent(strategy_year["base_mid"][y]), per_cent(strategy_year["base_cross"][y])])
-show("2012-2026, per year", [per_cent(index_whole), per_cent(tbills_whole),
+show("2012-2026, per year", [per_cent(index_whole),
                              per_cent(whole_sample["base_mid"]), per_cent(whole_sample["base_cross"])])
 print("  sec:robustness")
 for y in years:
@@ -588,22 +429,28 @@ for y in years:
 show("2012-2026, per year", [per_cent(index_whole),
                              per_cent(whole_sample["base_mid"]), per_cent(whole_sample["p15_mid"]),
                              per_cent(whole_sample["base_cross"]), per_cent(whole_sample["p15_cross"])])
-print("  (the index's 2012-2026 figure is compounded, the strategy's is not; for information,")
-print("   the mean of the index's 14 full years 2012-2025 is %.1f%%)" % (100 * mean(full_years)))
 
-# negative years and the worst year, for the rows added to tab:quarters-index and tab:p15-quarters
-print("  Negative years and worst year (2026 counted as a year):")
-year_columns = [("index", index_year), ("T-bills", tbills_year)]
+# the negative years and the worst year, the last two rows of tab:p15-quarters
+# (2026 counted as a year)
+year_returns = {"index": index_year}         # column name -> {year: return}
 for run in RUNS:
-    year_columns.append((run, strategy_year[run]))
-for name, returns in year_columns:
-    negative = []
+    year_returns[run] = strategy_year[run]
+negative_cells = []
+worst_cells = []
+worst_years = []
+# in the column order of tab:p15-quarters
+for name in ["index", "base_mid", "p15_mid", "base_cross", "p15_cross"]:
+    returns = year_returns[name]
+    negative = 0
     worst_year = years[0]
     for y in years:
         if returns[y] < 0:
-            negative.append(y)
+            negative = negative + 1
         if returns[y] < returns[worst_year]:
             worst_year = y
-    print("  %-11s negative years %s (of %d) %s   worst %s %s" % (
-        name, "$%d$" % len(negative), len(years), negative,
-        worst_year, per_cent_sign(returns[worst_year])))
+    negative_cells.append("$%d$" % negative)
+    worst_cells.append(per_cent_sign(returns[worst_year]))
+    worst_years.append(worst_year)
+print("  tab:p15-quarters")
+show("Negative years (of %d)" % len(years), negative_cells)
+show("Worst year %s" % worst_years, worst_cells)

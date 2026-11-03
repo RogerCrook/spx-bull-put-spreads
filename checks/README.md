@@ -28,6 +28,14 @@ comes from `chapter4_numbers.py`), the folder `data/` (the control run of
 was in the code repository except the four scripts, which are in commit `150ce8a`
 and earlier.
 
+Removed on 2026-11-03 (Arian, review_log T112), because their numbers left the
+thesis with T100: `check_atm_bias.py` (the simulated bias of the ATM fit) and
+`check_greeks.py` (the stored Greeks recomputed). The same day `chapter4_numbers.py`,
+`quarters_vs_index.py` and `entry_delta_backtest.py` lost the parts behind numbers
+no longer in the thesis (the tables set aside in
+`Masterarbeit_Tex_file/set_aside_ch4.tex`, the T-bill column, figures printed only
+for information). All of it is in commit `cf6519a` (tag `thesis-v4`).
+
 Without the thesis `.tex` (not in the code repository), `chapter4_numbers.py` still
 computes every number but marks the "in the thesis" column with "?".
 
@@ -44,10 +52,9 @@ stock-close rule; until then the first runs of 2026-10-08, since removed). Until
 
 | Script | What it computes | Thesis passages | Inventory row |
 |---|---|---|---|
-| `chapter4_numbers.py` | every backtest number of ch. 4 and `tab:costs`, for the reported runs and for the runs without the broken-quote rule, plus the base-case return per year without the stock-close rule, each with "in the thesis: yes/-" | `tab:costs`, `sec:backtest-design`, the returns in `sec:monitoring` and `sec:broken-quotes` (since 2026-10-30, T78, `tab:results-base`, `tab:losses-months`, `tab:losses-rules`, the old `tab:results-years`, the text of `sec:results-main` and `sec:robustness` are set aside in `Masterarbeit_Tex_file/set_aside_ch4.tex`, and since 2026-10-30, T80, also `tab:p15`, `tab:p15-test` commented out) | 24, 26, 27, 28, 31–34 |
+| `chapter4_numbers.py` | the backtest numbers outside the ch. 4 tables, each with "in the thesis: yes/-": the cost of crossing the spread, the snapshots with a leg missing, the base-case return per year with and without the two data rules, and the test of p15 against the base case (commented out in the thesis since T68) | `tab:costs`, `sec:backtest-design`, the returns in `sec:monitoring` and `sec:broken-quotes`, `tab:p15-test` (commented out) | 24, 26, 27, 28, 31–34 |
 | `check_broken_quotes_tex.py` | held and skipped snapshots, refused entries, how often the conditions of `def:broken` hold, the example quotes (3 Apr 2020 at 10:00 and 10:15, 5 Aug 2024), the first trade the rule changes; margins 2012 / 2026, forward first / last cycle (since 2026-10-29 without the distribution of the two measures and the compounding count, which left the thesis with T56 and T61) | `sec:broken-quotes`, `sec:backtest-design`, text after `tab:costs` | 25, 27, 28 |
-| `entry_delta_backtest.py` | the entry delta Δ₀ of the backtest's own entries (base mid, base cross for comparison): statistics, histogram, by maturity rule and year, strikes vs targets, distances to an absolute band [0.20, 0.40] (added 2026-10-28, T63) | the footnote to "averages 0.27" after `prop:entry-delta` (since 2026-10-30, T78, `sec:realised-entry-delta` and its two tables are set aside in `Masterarbeit_Tex_file/set_aside_ch4.tex`) | — |
-| `check_greeks.py` | stored Greeks recomputed on all quotes of 5 days; Greek formulas against finite differences | `sec:iv-impl` (since 2026-10-28, T62; before `sec:realised-entry-delta`) | 30 |
+| `entry_delta_backtest.py` | the entries of the base case at mid: their number, the mean entry delta Δ₀, the mean implied volatility of the sold and the bought put (added 2026-10-28, T63) | "averages 0.27" after `prop:entry-delta` and its footnote, the skew sentence before it | — |
 | `check_s_close.py` | quoted index midpoint at the last and at the stock-close snapshot against the official close | `sec:data` | 12 |
 | `check_vol30.py` | 30-day vol and stress threshold rebuilt, stress share, the example days | `sec:stress` | 11 |
 | `check_forward.py` | forwards rebuilt on 17 days; SPX vs SPXW, by time of day | `sec:monitoring` | 22 |
@@ -55,16 +62,15 @@ stock-close rule; until then the first runs of 2026-10-08, since removed). Until
 | `credit_by_maturity.py` | illustrative Black–76 credit at 30 / 60 / 90 days and κ; measured credit by maturity rule | `rem:credit-size` | 9, 10 |
 | `check_formula_values.py` | factor N(d1)/N(−d1); round trip; finite-difference delta (example inputs, no data) | `rem:atm-otm`, `tab:validation` | 1, 21 |
 | `check_expiry_count.py` | expiries listed on 28 Sep 2012 and 28 Jul 2026 | `sec:data` | 13 |
-| `check_sample_day.py` | 8 Jun 2021: near-money vols, slices, points per ATM fit, fitting window | `sec:iv-impl`, `rem:atm-band` | 18, 19 |
+| `check_sample_day.py` | 8 Jun 2021: near-money vols, slices, points per ATM fit, fitting window | `sec:atm-impl` (the slices and the window; the other figures left the thesis with T100) | 18, 19 |
 | `check_root_forwards.py` | SPX vs SPXW forwards on 1 and 5 Aug 2024 | `tab:validation` | 21 |
 | `check_ohlc_zeros.py` | share of raw rows with OHLC all zero, first trading day of each month | `sec:cleaning` | 14 |
 | `check_iv_failures.py` | quotes without an implied volatility over all of `Data/04_greeks/` | `sec:iv-impl`, `rem:bisection` | 15 |
 | `check_forward_error.py` | single-strike parity error by distance from the money, raw quotes, 8 Jun 2021 10:00 | `sec:forward-impl` | 17 |
-| `check_atm_bias.py` | bias and noise of the ATM fit on the one-sided window (simulation, stated inputs) | `rem:atm-band` | 20 |
 | `check_validation_day.py` | call vs put vol, smile shape, where the Greeks peak, on the two `fig:smile` slices | `tab:validation` | 21 |
 | `fetch_gspc.py` | downloaded `Data/07_index_close/GSPC_daily.csv` (Yahoo ^GSPC) on 2026-10-22 | data source of `sec:data` | 12 |
 | `fetch_sp500tr.py` | downloaded `Data/09_total_return/SP500TR_daily.csv` (Yahoo ^SP500TR with dividends, and ^GSPC) on 2026-10-29; checks it against `GSPC_daily.csv`, daily gaps, calendar-year total returns (review_log T69) | `sec:sources`, data source of the index comparison in `sec:results-main`, `sec:robustness` | — |
-| `quarters_vs_index.py` | return of every quarter of the four reported runs against the S&P 500 with dividends, statistics of the quarterly returns, quarters ahead of the base case (review_log T69, run 2026-10-29); since 2026-10-30 (T78) also part E, the return of every calendar year of the index, the T-bills and the four runs, the 2012–2026 row per year (strategy not compounded, index compounded), negative and worst years | `tab:results-years`, `tab:quarters-base`, `tab:quarters-index`, `tab:p15-years`, `tab:quarters-p15`, `tab:p15-quarters` (until 2026-10-30 also "Against the index" and the quarterly paragraph of `sec:robustness`, now in `Masterarbeit_Tex_file/set_aside_ch4.tex`) | — |
+| `quarters_vs_index.py` | return of every quarter and every calendar year of the four reported runs against the S&P 500 with dividends, statistics of the quarterly returns, the 2012–2026 row per year (strategy not compounded, index compounded), negative and worst years (review_log T69, T78) | `tab:results-years`, `tab:quarters-base`, `tab:quarters-index`, `tab:p15-years`, `tab:quarters-p15`, `tab:p15-quarters` | — |
 
 The C15 rerun (2026-10-27) was verified with review tools that were in
 `review_2026-10/` (removed 2026-10-29, see above): `test_c15_stage1_days.py` (the new
