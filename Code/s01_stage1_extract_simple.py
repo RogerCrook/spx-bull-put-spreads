@@ -12,7 +12,7 @@ HOW TO RUN IT
 
 It is safe to stop it and run it again - it skips months it already finished.
 
-CHANGED 2026-10-27 (review_log.md C15; the version before is the one in
+CHANGED 2026-10-27 (the data rebuild; the version before is the one in
 commit 4aca3ae, tag thesis-2026-10-27):
   - the index level S at the snapshot after the stock close (16:15, or 13:15 on
     early-close days) is the official daily close of the index, because the
@@ -24,9 +24,9 @@ commit 4aca3ae, tag thesis-2026-10-27):
     to 38% of the forward) with room for a rally while it is held.
   - each month is written under a temporary name first (".part") and renamed
     when complete, so a crash while writing cannot leave half a month behind
-    that a later run would skip (review_log.md C7).
+    that a later run would skip.
   - main() only runs when this file is started directly, not when another
-    file imports it (review_log.md C4), so its functions can be tested.
+    file imports it, so its functions can be tested.
 """
 
 import os                       # for looking at files and folders
@@ -124,7 +124,7 @@ def clean_one_file(path, close):
     df["spot_quote"] = (df["underlying_bid"] + df["underlying_ask"]) / 2  # middle of the index quote, as recorded
     df["spot"] = df["spot_quote"]                                   # S, the index level used from here on
 
-    # --- the snapshot after the stock close (review_log.md C8, C15) ------
+    # --- the snapshot after the stock close (the official close) ---------
     # The stocks stop at 16:00 (13:00 on early-close days), the options are
     # quoted until 16:15 (13:15). At that last snapshot the index quote is no
     # longer a price, so S there is the official close of the day.
@@ -239,7 +239,7 @@ def main():
 
         table = pd.concat(pieces)                # stack all the days of this month
 
-        # Write under a temporary name first and rename when complete (C7): if
+        # Write under a temporary name first and rename when complete: if
         # the program is stopped while writing, only the ".part" file is
         # incomplete, and the month is done again on the next run.
         part_path = out_path + ".part"
@@ -254,7 +254,7 @@ def main():
 
 
 # Run main() only when this file is started directly (python Code/s01_...py),
-# not when another file imports it to use clean_one_file (review_log.md C4).
+# not when another file imports it to use clean_one_file.
 # Python sets __name__ to "__main__" only for the file that was started.
 if __name__ == "__main__":
     main()

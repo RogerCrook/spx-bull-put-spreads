@@ -19,7 +19,7 @@ It skips files it has already done, so you can stop it and start it again.
 
 All other columns of the cleaned files are kept as they are, among them spot
 (the index level S used for delta and gamma) and, since 2026-10-27, spot_quote
-(the recorded index quote; see Code/s01_stage1_extract_simple.py, review_log.md C15).
+(the recorded index quote; see Code/s01_stage1_extract_simple.py, the data rebuild of 2026-10-27).
 """
 
 import os
@@ -172,7 +172,7 @@ def main():
 
         # index=False: do not write pandas' row numbers into the file.
         # Written under a temporary name first and renamed when complete
-        # (2026-10-27, as in s01, review_log.md C7): a run stopped while writing
+        # (2026-10-27, as in s01): a run stopped while writing
         # leaves only a ".part" file, and the month is done again next time.
         part_path = out_path + ".part"
         result.to_csv(part_path, index=False)
@@ -196,7 +196,7 @@ def main():
 
 
 # Run main() only when this file is started directly (python Code/s07_stage2_greeks.py),
-# not when another file imports it to use process_one_month (review_log.md C4,
-# changed 2026-10-27). Python sets __name__ to "__main__" only for the file that was started.
+# not when another file imports it to use process_one_month (changed
+# 2026-10-27). Python sets __name__ to "__main__" only for the file that was started.
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 """
 CHECK: how far the quoted index level is from the official close
-(reproduction inventory, row 12; review_log C8)
+(reproduction inventory, row 12)
 
 What this file is for:
     sec:data says the index level S is the midpoint of the index bid and ask
@@ -19,7 +19,7 @@ What this file is for:
     a folder old_versions/,
     removed on 2026-10-29).
 
-    Since 2026-10-27 (review_log.md C15) stage 1 itself uses the official close
+    Since the data rebuild of 2026-10-27 stage 1 itself uses the official close
     as S at the last snapshot, and keeps the recorded quote in its own column,
     spot_quote. This file reads spot_quote, so it still compares the recorded
     quote (before, it read spot, which was the recorded quote then).

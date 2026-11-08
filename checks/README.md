@@ -20,11 +20,11 @@ Removed on 2026-10-29 (Arian), because no thesis number comes from them: the fou
 scripts `check_entry.py` (the daily 10:00 entry-delta study, replaced by
 `entry_delta_backtest.py`, review_log T63), `check_quotes_held.py` (the held-leg
 quote screen that found the broken quotes; its 10:00 / 14:00 claim left the thesis
-with T56), `check_put_window.py` (the count behind the choice of the put window,
-C15) and `check_missing_legs.py` (why a leg was missing; the count of 22 snapshots
+with T56), `check_put_window.py` (the count behind the choice of the put window
+in the data rebuild) and `check_missing_legs.py` (why a leg was missing; the count of 22 snapshots
 comes from `chapter4_numbers.py`), the folder `data/` (the control run of
 `check_quotes_held.py`) and the folder `review_2026-10/` (the review tools of
-22–28 October and the printouts of the C15 checks, `c15_outputs/`). None of them
+22–28 October and the printouts of the checks of the data rebuild, `c15_outputs/`). None of them
 was in the code repository except the four scripts, which are in commit `150ce8a`
 and earlier.
 
@@ -72,7 +72,7 @@ stock-close rule; until then the first runs of 2026-10-08, since removed). Until
 | `fetch_sp500tr.py` | downloaded `Data/09_total_return/SP500TR_daily.csv` (Yahoo ^SP500TR with dividends, and ^GSPC) on 2026-10-29; checks it against `GSPC_daily.csv`, daily gaps, calendar-year total returns (review_log T69) | `sec:sources`, data source of the index comparison in `sec:results-main`, `sec:robustness` | — |
 | `quarters_vs_index.py` | return of every quarter and every calendar year of the four reported runs against the S&P 500 with dividends, statistics of the quarterly returns, the 2012–2026 row per year (strategy not compounded, index compounded), negative and worst years (review_log T69, T78) | `tab:results-years`, `tab:quarters-base`, `tab:quarters-index`, `tab:p15-years`, `tab:quarters-p15`, `tab:p15-quarters` | — |
 
-The C15 rerun (2026-10-27) was verified with review tools that were in
+The data rebuild (2026-10-27) was verified with review tools that were in
 `review_2026-10/` (removed 2026-10-29, see above): `test_c15_stage1_days.py` (the new
 stage 1 on four days against the old cleaned data) and `compare_c15.py` (old against
 new data, row by row, for stage 1, stage 2, the ATM file and the 30-day vol file).

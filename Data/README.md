@@ -15,7 +15,7 @@ All data of the thesis, numbered in the order the data sets were made (reorganis
 | `08_vix/` | | Cboe's daily VIX history (`VIX_History.csv`), cited once in `tab:validation`, used by no script | download from https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv, 27 October 2026 |
 | `09_total_return/` | | daily close of the S&P 500 total return index (Yahoo ^SP500TR, dividends reinvested) and of the price index ^GSPC, 1 Dec 2011 to 14 Aug 2026 (`SP500TR_daily.csv`), with the download date and addresses (`retrieved.txt`); for the quarterly comparison in ch. 4 (review_log T69) | `checks/fetch_sp500tr.py`, 29 October 2026 |
 
-Since 2026-10-27 (review_log C15) `02_clean/`, `04_greeks/` and `05_atm_vol.csv`
+Since the data rebuild of 2026-10-27 `02_clean/`, `04_greeks/` and `05_atm_vol.csv`
 have a column `spot_quote` (the recorded index quote) next to `spot` (the index level
 S used): they differ only at the snapshot after the stock close, where `spot` is the
 official close. Puts are kept down to K/S = 0.30. `Code/s08_atm_vol.py` saves the

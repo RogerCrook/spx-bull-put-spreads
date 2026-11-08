@@ -1,6 +1,6 @@
 """
 CHECK: the forward of every slice on 17 days, and SPX against SPXW
-(reproduction inventory, row 22; review_log C9)
+(reproduction inventory, row 22)
 
 What this file is for:
     Stage 2 (Code/s04_forward.py) computes one forward per slice (snapshot,

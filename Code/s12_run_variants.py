@@ -43,15 +43,15 @@ VARIANTS = {
     "t60_mid":    {"EXECUTION": "mid",   "TARGET_DAYS": 60},
     "t60_cross":  {"EXECUTION": "cross", "TARGET_DAYS": 60},
 
-    # Comparison runs (added 2026-10-27, review_log.md C15). They change no rule
+    # Comparison runs (added with the data rebuild of 2026-10-27). They change no rule
     # of the strategy, only switch off one of the two rules for bad DATA, so the
     # thesis can show what that rule changes (sec:monitoring, sec:broken-quotes).
-    # without the broken-quote rule (C14)
+    # without the broken-quote rule
     "base_mid_without_quote_rule":    {"EXECUTION": "mid",   "QUOTE_RULE": "off"},
     "base_cross_without_quote_rule":  {"EXECUTION": "cross", "QUOTE_RULE": "off"},
     "p15_mid_without_quote_rule":     {"EXECUTION": "mid",   "BAND_PROFIT": 0.15, "QUOTE_RULE": "off"},
     "p15_cross_without_quote_rule":   {"EXECUTION": "cross", "BAND_PROFIT": 0.15, "QUOTE_RULE": "off"},
-    # without the broken-quote rule and without the stock-close rule (C9)
+    # without the broken-quote rule and without the stock-close rule
     "base_mid_without_close_rule":    {"EXECUTION": "mid",   "QUOTE_RULE": "off", "SKIP_CLOSE_SNAPSHOT": False},
     "base_cross_without_close_rule":  {"EXECUTION": "cross", "QUOTE_RULE": "off", "SKIP_CLOSE_SNAPSHOT": False},
 }
@@ -77,8 +77,8 @@ def run_one(name):
     backtest.TRADES_FILE = "trades_" + name + ".csv"
     backtest.EQUITY_FILE = "equity_" + name + ".csv"
     backtest.QUARTERS_FILE = "quarters_" + name + ".csv"
-    backtest.QUOTES_FILE = "quotes_" + name + ".csv"       # the quote test (C14)
-    backtest.MISSING_FILE = "missing_" + name + ".csv"     # the missing legs (C15)
+    backtest.QUOTES_FILE = "quotes_" + name + ".csv"       # the broken-quote test
+    backtest.MISSING_FILE = "missing_" + name + ".csv"     # the missing legs
 
     print("=" * 70)
     print("VARIANT", name, settings)

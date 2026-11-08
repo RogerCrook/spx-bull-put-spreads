@@ -65,9 +65,9 @@ the reported runs.
 | `SKIP_CLOSE_SNAPSHOT` | `True` | no decision at the stock-close snapshot (16:00, 13:00 on early-close days) |
 | `QUOTE_RULE` | `"on"` | skips broken option quotes (`"count"` only counts them, `"off"` uses every quote) |
 
-The comments refer to the author's review log (not included), e.g. C9 (the stock
-close), C14 (broken quotes) and C15 (stage 1 stores the official close as the index
-level after the stock close).
+The comments name the stock-close rule and the broken-quote rule (the two switches
+above), the official close (stage 1 stores the official close as the index level
+after the stock close) and the data rebuild of 2026-10-27, when that was added.
 
 ## Licence and citation
 

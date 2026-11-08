@@ -31,7 +31,7 @@ T63). The numbers `s02` and `s10` were not given to other scripts, so the names
 in the thesis and in older notes stay valid. Both are in commit `150ce8a` and
 earlier.
 
-**Changed 2026-10-27 (review_log C15):** stage 1 takes the index level S at the
+**Changed 2026-10-27 (the data rebuild):** stage 1 takes the index level S at the
 snapshot after the stock close (16:15, or 13:15 on early-close days) to be the
 official daily close (`Data/07_index_close/GSPC_daily.csv`) and keeps the recorded
 quote in a column `spot_quote`, and it keeps puts down to K/S = 0.30 (was 0.45).

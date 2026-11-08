@@ -28,20 +28,20 @@ WHAT IS IN THIS VERSION (build steps 1 to 3)
       year) is its P&L divided by the average margin held in it ("return on
       margin", function period_returns, sec:backtest-design).
 
-    - the end of the day (decided 2026-10-23, review_log.md C8 and C9).
-        C9: the snapshot at the stock close (16:00, or 13:00 on early-close days)
+    - the end of the day (decided 2026-10-23).
+        Stock-close rule: the snapshot at the stock close (16:00, or 13:00 on early-close days)
             has unreliable option quotes. No decision is taken there: no exit
             test, no new position. The next snapshot takes over. Switch
             SKIP_CLOSE_SNAPSHOT below.
-        C8: the snapshot after the close (16:15, or 13:15) has a meaningless
-            index quote. Since 2026-10-27 (review_log.md C15) this is fixed in
+        Official close: the snapshot after the close (16:15, or 13:15) has a meaningless
+            index quote. Since the data rebuild of 2026-10-27 this is fixed in
             the DATA: stage 1 (Code/s01_stage1_extract_simple.py) takes S there
             to be the official daily close, so the stored deltas are right and
             the backtest uses them as they are. (Until then the backtest
             corrected those deltas itself, switch USE_OFFICIAL_CLOSE; that code
             is in commit 4aca3ae, tag thesis-2026-10-27.)
 
-    - broken option quotes (decided 2026-10-25, review_log.md C14; developed
+    - broken option quotes (decided 2026-10-25; developed
       in a separate experiment, removed 2026-10-29). Also a problem of the DATA: some quotes are
       broken for one snapshot, e.g. 12.3 / 52.6 for a put quoted 48.3 / 50.0 a
       snapshot earlier, which gives a meaningless implied vol and delta, and so
@@ -109,17 +109,17 @@ STRESS_VOL_DAYS = 30
 # "cross": sell at the bid and buy at the ask (crossing the spread).
 EXECUTION = "mid"
 
-# ---- the end of the day (review_log.md C8 and C9, decided 2026-10-23) -------
+# ---- the end of the day (decided 2026-10-23) ---------------------------------
 # True = the fix is on (base case from 2026-10-23); False = the old behaviour.
 
-# C9: take no decision at the snapshot of the stock close (16:00, or 13:00 on
+# The stock-close rule: take no decision at the snapshot of the stock close (16:00, or 13:00 on
 # early-close days), because the option quotes there are unreliable.
 SKIP_CLOSE_SNAPSHOT = True
 
-# C8 (the index level after the close) is handled in the data since 2026-10-27,
+# The official close (the index level after the close) is handled in the data since 2026-10-27,
 # see the description at the top. Nothing to switch here any more.
 
-# ---- broken option quotes (review_log.md C14, decided 2026-10-25) ----------
+# ---- broken option quotes (decided 2026-10-25) -----------------------------
 # "on":    (base case from 2026-10-25) a leg whose quote is broken is treated
 #          like a missing quote: no exit test and no new mark while held, no
 #          opening at that snapshot
@@ -129,7 +129,7 @@ SKIP_CLOSE_SNAPSHOT = True
 QUOTE_RULE = "on"
 
 # A quote is broken when ALL THREE hold, against the same option's quote at the
-# previous snapshot used (the stock-close snapshot is never used, C9):
+# previous snapshot used (the stock-close snapshot is never used):
 #   its implied vol moved by more than BROKEN_VOL_JUMP (0.03 = 3 vol points)
 #   its bid/ask spread is more than BROKEN_WIDTH_RATIO times as wide as then
 #   it widened more than its mid moved (a side ran away; in a real move the
@@ -399,7 +399,7 @@ def open_position(when, atm_now, puts_now, deficit):
     chosen["target_credit"] = target["credit"] # credit of the 30-day spread, for the record
     chosen["deficit_at_entry"] = deficit
     chosen["skipped"] = 0                      # snapshots where a leg was missing
-    chosen["skipped_broken"] = 0               # snapshots skipped for a broken quote (C14)
+    chosen["skipped_broken"] = 0               # snapshots skipped for a broken quote
 
     return chosen
 
@@ -505,7 +505,7 @@ def find_leg(puts_now, position, strike):
 
 def test_quote(leg_now, leg_before):
     """
-    The broken-quote test for one leg (QUOTE_RULE, review_log.md C14).
+    The broken-quote test for one leg (QUOTE_RULE).
 
       leg_now    : the leg's row at this snapshot
       leg_before : the same option's row at the previous snapshot used, or None
@@ -810,7 +810,7 @@ def read_month(month):
 
 
 # ======================================================================
-#  The end of the day (review_log.md C9)
+#  The end of the day (the stock-close rule)
 # ======================================================================
 
 def end_of_day_times(greeks):
@@ -862,12 +862,12 @@ def main():
     rates = load_rates()
 
     # counter for the end-of-day handling, printed in the summary
-    close_snapshots_skipped = 0                # C9: snapshots at the close not used
+    close_snapshots_skipped = 0                # stock-close rule: snapshots at the close not used
 
     # one row per held snapshot where a leg was missing, saved to MISSING_FILE
     missing_rows = []
 
-    # the broken-quote test (QUOTE_RULE, C14)
+    # the broken-quote test (QUOTE_RULE)
     if QUOTE_RULE == "on" and (BROKEN_VOL_JUMP is None or BROKEN_WIDTH_RATIO is None):
         raise ValueError("QUOTE_RULE = 'on' needs BROKEN_VOL_JUMP and BROKEN_WIDTH_RATIO")
     quote_rows = []                            # rows of QUOTES_FILE go in here
@@ -939,14 +939,14 @@ def main():
 
             current_date = today
 
-            # ---- 0b. the end of the day (review_log.md C9) ---------------
+            # ---- 0b. the end of the day (the stock-close rule) -----------
 
             time_now = when[11:]               # the time part, e.g. "16:00:00"
 
             # the time of today's stock close, e.g. "16:00:00"
             close_time = day_times[today]
 
-            # C9: at the stock close no decision is taken. "continue" jumps
+            # The stock-close rule: at the stock close no decision is taken. "continue" jumps
             # straight to the next snapshot: no exit test, no new position.
             if SKIP_CLOSE_SNAPSHOT and time_now == close_time:
                 close_snapshots_skipped = close_snapshots_skipped + 1
@@ -963,7 +963,7 @@ def main():
                     # a leg is not quoted here: skip the tests, try next snapshot
                     position["skipped"] = position["skipped"] + 1
                     # write down when and which leg (the file MISSING_FILE), so
-                    # that the cause can be looked up later (review_log C15, T26;
+                    # that the cause can be looked up later (added with the data rebuild;
                     # the script that did it was removed on 2026-10-29)
                     missing_rows.append({"when": when,
                                          "root": position["root"],
@@ -973,7 +973,7 @@ def main():
                                          "short_missing": short_leg is None,
                                          "long_missing": long_leg is None})
                 else:
-                    # ---- 1a. the broken-quote test (QUOTE_RULE, C14) ------
+                    # ---- 1a. the broken-quote test (QUOTE_RULE) ------
                     reason = None
                     broken_now = False
                     if QUOTE_RULE != "off":
@@ -1039,7 +1039,7 @@ def main():
 
                     position = open_position(when, atm_now, puts_now, deficit)
 
-                    # the broken-quote test on the two legs we would open (C14)
+                    # the broken-quote test on the two legs we would open
                     if position is not None and QUOTE_RULE != "off":
                         short_leg = find_leg(puts_now, position, position["strike_short"])
                         long_leg = find_leg(puts_now, position, position["strike_long"])
@@ -1085,7 +1085,7 @@ def main():
                     flat_snapshots = flat_snapshots + 1
 
             # this snapshot was used: it is the "previous snapshot" for the next
-            # one (the stock-close snapshot never gets here, see C9 above)
+            # one (the stock-close snapshot never gets here, see the stock-close rule above)
             puts_before = puts_now
 
     # the very last day has no "next day" to trigger its row, so finish it here
@@ -1199,7 +1199,7 @@ def main():
     print()
     print("saved", len(table), "trades to", TRADES_FILE)
     print("snapshots without a position:", flat_snapshots)
-    print("close snapshots skipped (C9):", close_snapshots_skipped)
+    print("close snapshots skipped (stock-close rule):", close_snapshots_skipped)
 
     # the held snapshots with a missing leg (one dictionary per snapshot)
     missing_table = pd.DataFrame(missing_rows)

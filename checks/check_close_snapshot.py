@@ -1,7 +1,7 @@
 """
 CHECK: exits and trading cost at the stock-close snapshot, in the runs made
 without the rule "no decision at the stock close" (sec:monitoring, "Decision
-times"; reproduction inventory, row 23; review_log C9, "check C")
+times"; reproduction inventory, row 23)
 
 What this file is for:
     sec:monitoring says that in runs of the backtest with decisions at every

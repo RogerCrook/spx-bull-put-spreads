@@ -20,7 +20,7 @@ What this file is for:
 HOW TO RUN IT
     python Code/s08_atm_vol.py
 
-CHANGED 2026-10-27 (review_log.md C3 and C15; the version before is the one
+CHANGED 2026-10-27 (the data rebuild; the version before is the one
 in commit 4aca3ae, tag thesis-2026-10-27):
   - each month's result is first saved on its own in PARTS_FOLDER. A month
     already saved there is not done again, and a month that fails is reported
@@ -29,10 +29,10 @@ in commit 4aca3ae, tag thesis-2026-10-27):
     months are put together into OUT_FILE exactly as before.
     WARNING: a month already in PARTS_FOLDER is never recomputed. Before a
     rerun on changed Greeks files, delete PARTS_FOLDER, or the old months are
-    used again without any message. (The folder of the C15 run was deleted
+    used again without any message. (The folder of the data-rebuild run was deleted
     on 2026-10-29, after OUT_FILE was written.)
   - the recorded index quote spot_quote is saved next to spot.
-  - main() only runs when this file is started directly (review_log.md C4).
+  - main() only runs when this file is started directly.
 """
 
 import os
@@ -131,7 +131,7 @@ def process_one_file(path):
             "expiration": expiry,
             "dte": slice_table["dte"].iloc[0],
             "spot": slice_table["spot"].iloc[0],
-            "spot_quote": slice_table["spot_quote"].iloc[0],    # the recorded index quote (C15)
+            "spot_quote": slice_table["spot_quote"].iloc[0],    # the recorded index quote (data rebuild)
             "forward": F,
             "atm_iv": sigma,
         })
@@ -218,6 +218,6 @@ def main():
 
 
 # Run main() only when this file is started directly (python Code/s08_atm_vol.py),
-# not when another file imports it (review_log.md C4, changed 2026-10-27)
+# not when another file imports it (changed 2026-10-27)
 if __name__ == "__main__":
     main()
