@@ -8,6 +8,7 @@
 !/Code/
 !/checks/
 !/Data/
+!/validation/
 
 # Data/: only the README that describes the layout
 /Data/*
@@ -16,6 +17,12 @@
 # checks/: no review tools, no data
 /checks/review_2026-10/
 /checks/data/
+
+# validation/: the test scripts and their notes only (the data packets of the hand
+# checks and every output are .csv or .txt, left out below)
+/validation/automatic/output/
+/validation/second_implementation/output*/
+/validation/hand_checks/packets/
 
 # everywhere: no outputs, no Python caches
 *.csv

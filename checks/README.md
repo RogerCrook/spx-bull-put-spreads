@@ -83,3 +83,19 @@ Not in this folder but also behind thesis numbers: the pipeline scripts in `Code
 (e.g. `s09_vol_series.py` for the 19.7% stress share, `s13_figure_smile.py` for
 `fig:smile`, `s11_backtest.py` and `s12_run_variants.py` for the runs in
 `results/`).
+
+Also behind thesis numbers since 2026-11-20, but in `validation/` (in the code
+repository): the numbers of `tab:code-validation` and the text of Appendix
+`sec:code-validation`. Summary in `validation/README.md`.
+
+| Script (in `validation/`) | Numbers | Row of `tab:code-validation` |
+|---|---|---|
+| `hand_checks/compare.py` (with `calculator.py`) | 32 snapshots, 22 by rule, 10 at random, 4 rebuilt from raw quotes, 237 of 239 values | Hand checks |
+| `automatic/one_step_check.py` | 380,511 snapshots, 63,916 trade values, the two ties (16 Nov 2012, May 2014, 1.8·10⁻¹⁵, 33 instead of 30 days) | One-step check, "Two ties" |
+| `automatic/formula_check.py` | every 10th row of 16 months, 4,275,742 rows, 4 at the limit | Known answers |
+| `automatic/invariants_check.py` | 132,300 equity values, 236 quarters, 48 cells, 2,204 trades | Invariants |
+| `automatic/p15_vs_base_check.py`, `automatic/metamorphic/compare.py` | the four changed copies, 148 paired cycles | Changed data |
+| `automatic/synthetic/make_market.py`, `make_rough_market.py`, `check.py`, `check_rough.py` | 250,470 + 24,840 = 275,310 quotes | Made-up market |
+| `second_implementation/compare.py` (with `backtest.py`) | 2,204 cycles, 27 values, 3·10⁻¹¹ dollars | Second implementation |
+| `automatic/mutation/run_mutants.py`, `rerun_gaps.py` | 71 errors, 21 without effect, 48 of 50 caught | Mutation tests |
+| `test_specification.md` | 10 / 14 / 35 statements | text before the table |

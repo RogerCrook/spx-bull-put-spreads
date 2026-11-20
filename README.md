@@ -10,6 +10,7 @@ code, **no data and no results**, because the option data are licensed from Cboe
 | `Code/` | the pipeline, `s01` to `s14`, in the order it runs (`Code/README.md`) |
 | `checks/` | read-only scripts behind the numbers in the thesis (`checks/README.md`) |
 | `Data/` | empty here. The expected layout is in `Data/README.md` |
+| `validation/` | the tests of the code (Appendix A of the thesis), written from the thesis without reading the code: test specification, hand checks, automatic tests, made-up markets, a second backtest, mutation tests (`validation/README.md`) |
 
 ## Data (not included)
 
