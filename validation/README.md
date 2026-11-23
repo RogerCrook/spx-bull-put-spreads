@@ -9,7 +9,8 @@ read to write a test.
 the same when checked. The only known departures from the thesis's exact rule are
 two ties decided by floating-point rounding (below).
 
-Details, scripts and outputs are in the folders named in the table.
+Details, scripts and outputs are in the folders named in the table. Exactly which
+data each test used, with checksums, is in `test_data.md`.
 
 ## What was done
 
