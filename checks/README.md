@@ -60,7 +60,7 @@ stock-close rule; until then the first runs of 2026-10-08, since removed). Until
 | `check_forward.py` | forwards rebuilt on 17 days; SPX vs SPXW, by time of day | `sec:monitoring` | 22 |
 | `check_close_snapshot.py` | the two base-case runs without the stock-close rule: exits and spread cost at 15:45 / 16:00 / 16:15 | `sec:monitoring` | 23 |
 | `credit_by_maturity.py` | illustrative Black–76 credit at 30 / 60 / 90 days and κ; measured credit by maturity rule | `rem:credit-size` | 9, 10 |
-| `check_formula_values.py` | factor N(d1)/N(−d1); round trip; finite-difference delta (example inputs, no data) | `rem:atm-otm`, `tab:validation` | 1, 21 |
+| `check_formula_values.py` | factor N(d1)/N(−d1) and the volatility errors for a 1-point forward error; round trip; finite-difference delta (example inputs, no data) | `rem:atm-otm`, `tab:validation` | 1, 21 |
 | `check_expiry_count.py` | expiries listed on 28 Sep 2012 and 28 Jul 2026 | `sec:data` | 13 |
 | `check_sample_day.py` | 8 Jun 2021: near-money vols, slices, points per ATM fit, fitting window | `sec:atm-impl` (the slices and the window; the other figures left the thesis with T100) | 18, 19 |
 | `check_root_forwards.py` | SPX vs SPXW forwards on 1 and 5 Aug 2024 | `tab:validation` | 21 |

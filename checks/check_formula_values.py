@@ -10,6 +10,9 @@ What this file is for:
           an error in the forward than the out-of-the-money put at the same
           strike, by the factor N(d1) / N(-d1). The thesis gives it at
           x = -0.03 and x = -0.05 (tau = 30/365, sigma = 18%).
+          It also gives the volatility errors themselves, in volatility
+          points, when the forward F = 4000 is off by 1 index point
+          (printed under "(a, continued)", after the example inputs).
 
       (b) tab:validation, "round-trip inversion": price an option with
           sigma = 0.18, then let our bisection find sigma back from that
@@ -75,6 +78,56 @@ r = 0.04                                     # 4% interest rate
 D = np.exp(-r * tau)                         # discount factor D = exp(-r tau)
 
 print("example inputs for (b) and (c): S = %.0f, F = %.0f, tau = 30/365, r = 4%%, D = %.6f" % (S, F, D))
+print()
+
+
+# ----------------------------------------------------------------------
+# (a, continued) rem:atm-otm: the volatility errors themselves
+# ----------------------------------------------------------------------
+# If our forward is off by h points, the inversion finds sigma_hat instead of
+# the true sigma. The thesis shows, to first order (Taylor):
+#     sigma_hat - sigma = -(dC/dF) / (dC/dsigma) * h
+# With dC/dF = D N(d1), dP/dF = -D N(-d1) and dC/dsigma = dP/dsigma = D F phi(d1) sqrt(tau):
+#     call:  |error| = N(d1)  * A * |h|
+#     put:   |error| = N(-d1) * A * |h|,     A = 1 / (F phi(d1) sqrt(tau))
+# D cancels, so the interest rate does not matter here.
+# As a second check we really invert: price the option at the true forward
+# with sigma = 18%, then let our own bisection find sigma from that price,
+# but with the wrong forward F + h.
+
+h = 1.0                                      # the forward error, in index points
+
+print("(a, continued) rem:atm-otm   volatility error if the forward F = %.0f is off by h = %.0f point" % (F, h))
+
+for x in [-0.03, -0.05]:                     # the same two log-moneyness values as in (a)
+
+    K = F * np.exp(x)                        # the strike with log(K/F) = x, so K = F exp(x)
+
+    d1 = -x / one_sd + 0.5 * one_sd          # d1 as in (a)
+
+    density = norm.pdf(d1)                   # phi(d1): norm.pdf is the standard normal density
+
+    A = 1.0 / (F * density * np.sqrt(tau))   # A = 1 / (F phi(d1) sqrt(tau)), the same for call and put
+
+    # first-order errors, times 100 to turn a volatility fraction into volatility points
+    call_first_order = norm.cdf(d1) * A * h * 100
+    put_first_order = norm.cdf(-d1) * A * h * 100
+
+    # the market prices: our own Black-76 at the true forward F and sigma = 18%
+    call_price = volatility.black76_price(F, K, tau, sigma, D, True)
+    put_price = volatility.black76_price(F, K, tau, sigma, D, False)
+
+    # our own bisection, asked for sigma with the wrong forward F + h
+    call_found = volatility.implied_volatility(call_price, F + h, K, tau, D, True)
+    put_found = volatility.implied_volatility(put_price, F + h, K, tau, D, False)
+
+    # the errors of the real inversion, in volatility points
+    call_inverted = abs(float(call_found) - sigma) * 100
+    put_inverted = abs(float(put_found) - sigma) * 100
+
+    print("   x = %.2f   K = %.1f   first order: call %.3f, put %.3f   inverted: call %.3f, put %.3f   (vol points)" % (
+        x, K, call_first_order, put_first_order, call_inverted, put_inverted))
+
 print()
 
 
